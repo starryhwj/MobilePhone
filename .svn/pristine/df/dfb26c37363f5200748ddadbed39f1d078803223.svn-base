@@ -1,0 +1,658 @@
+"use strict";
+// Class definition
+
+var old_devide_id = ''
+
+var KTDatatableRecordSelectionDemo = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            sortable: false,
+            autoHide: false,
+            width: 20,
+        }, {
+            field: 'Subscriber__username',
+            title: '代理名称',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'mobilephoneid',
+            title: '设备',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.mobilephoneid == null) {
+                    return ''
+                } else {
+                    var mobilephoneid_list = row.mobilephoneid.split(',');
+                    var html = '';
+                    for (var i = 0; i < mobilephoneid_list.length; i++) {
+                        var per_id = mobilephoneid_list[i]
+                        html = html + '\
+                        <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                        data-mobilephone-id=' + per_id + '>' + per_id + '</a> \
+                        ' + ','
+                    };
+                    html = html.substring(0, html.length - 1);
+                    return html
+                }
+            }
+        }, {
+            field: 'UserSystem__username',
+            title: '顶级代理名称',
+            autoHide: false,
+            sortable: false,
+            width: 50,
+        }, {
+            field: 'UserSystemPercent',
+            title: '顶级代理提成',
+            autoHide: false,
+            sortable: false,
+            width: 50,
+        }, {
+            field: 'UserALevel__username',
+            title: '上级代理名称',
+            autoHide: false,
+            sortable: false,
+            width: 50,
+            template: function (row) {
+                if (row.UserALevel__username == null) {
+                    return ''
+                } else {
+                    return '\
+                    <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                    data-alevel-name=' + row.UserALevel__username + '>' + row.UserALevel__username + '</a> \
+                    '
+                }
+            }
+        }, {
+            field: 'UserALevelPercent',
+            title: '上级代理提成',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.UserALevel__username == null) {
+                    return ''
+                } else {
+                    return row.UserALevelPercent
+                }
+            },
+            width: 50,
+        }, {
+            field: 'UserBLevel__username',
+            title: '上上级代理名称',
+            autoHide: false,
+            sortable: false,
+            width: 50,
+            template: function (row) {
+                if (row.UserBLevel__username == null) {
+                    return ''
+                } else {
+                    return '\
+                    <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                    data-blevel-name=' + row.UserBLevel__username + '>' + row.UserBLevel__username + '</a> \
+                    '
+                }
+            }
+        }, {
+            field: 'UserBLevelPercent',
+            title: '上上级代理提成',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.UserBLevel__username == null) {
+                    return ''
+                } else {
+                    return row.UserBLevelPercent
+                }
+            },
+            width: 50,
+        }, {
+            field: 'Subscriber__true_name',
+            title: '姓名',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Subscriber__phone',
+            title: '手机号码',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Actions',
+            title: '操作',
+            sortable: false,
+            width: 110,
+            overflow: 'visible',
+            autoHide: false,
+            textAlign: 'center',
+            template: function (row) {
+                return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="详情" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-file"></i>\
+                    </button>\
+                ';
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+
+        options.search = {
+            input: $('#generalAgentSearch'),
+            onEnter: true,
+        };
+
+        $('#agentlist_column').on('change', function () {
+            datatable.search($(this).val().toLowerCase(), 'agentlistcolumn');
+        });
+
+        $('#agentlist_column').selectpicker();
+
+        var datatable = $('#datatable_agent_list').KTDatatable(options);
+
+        datatable.on('click', '[data-edit-id]', function () {
+            var id = $(this).data('edit-id');
+            initeditmodal();
+            $.ajax({
+                type: "POST",
+                url: $("#get_by_id_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        KTDatatableDevice.init(id);
+                        $('#editModal').modal('show');
+                        document.getElementById("id_edit_Subscriber__username").value = response['username'];
+                        document.getElementById("id_edit_UserSystem__username").value = response['usersystemusername'];
+                        document.getElementById("id_edit_UserSystemPercent").value = response['usersystempercent'];
+                        document.getElementById("id_edit_UserALevel__username").value = response['alevelusername'];
+                        document.getElementById("id_edit_UserALevelPercent").value = response['useralevelpercent'];
+                        document.getElementById("id_edit_UserBLevel__username").value = response['blevelusername'];
+                        document.getElementById("id_edit_UserBLevelPercent").value = response['userblevelpercent'];
+                        document.getElementById("id_edit_divice").value = response['mobilephoneid'];
+                        document.getElementById("id_edit_data_id").value = response['dataid'];
+                        document.getElementById("id_edit_device_id").value = response['mobilephoneid'];
+                        old_devide_id = response['mobilephoneid'];
+                    }
+                }
+            });
+        });
+
+        datatable.on('click', '[data-alevel-name]', function () {
+            var name = $(this).data('alevel-name');
+            localStorage.setItem('jumpToAgentName', name);
+            window.location.href = $("#agentdetail_url").text()
+        });
+
+        datatable.on('click', '[data-blevel-name]', function () {
+            var name = $(this).data('blevel-name');
+            localStorage.setItem('jumpToAgentName', name);
+            window.location.href = $("#agentdetail_url").text()
+        });
+
+        datatable.on('click', '[data-mobilephone-id]', function () {
+            var id = $(this).data('mobilephone-id');
+            localStorage.setItem('jumpToMobilePhone', id);
+            window.location.href = $("#devicemanage_url").text()
+        });
+    };
+
+    return {
+        // public functions
+        init: function (agentName) {
+            localSelectorDemo(agentName);
+        }
+    };
+}();
+
+var KTDatatableDevice = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#device_data_url").text(),
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: '#',
+            sortable: false,
+            width: 20,
+            selector: {
+                class: 'kt-checkbox--solid'
+            },
+            textAlign: 'center',
+        }, {
+            field: 'id_show',
+            title: 'ID',
+            template: '{{id}}',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Enable',
+            title: '设备状态',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '启用',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '停用',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Enable].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Enable].title +
+                    '</span>';
+            },
+        }, {
+            field: 'IsOnline',
+            title: '在线信息',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '在线',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '离线',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.IsOnline].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.IsOnline].title +
+                    '</span>';
+            },
+        }, {
+            field: 'tag',
+            title: '标签',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var cat = row.tag
+                var cat_list = cat.split(',')
+                if (cat_list != null && cat_list.length > 0) {
+                    var html_string = ''
+                    for (var i = 0; i < cat_list.length; i++) {
+                        var per = cat_list[i]
+                        html_string = html_string + ' ' +
+                            '<span class="badge badge-primary">' + per +
+                            '</span>';
+                    }
+                    return html_string
+                } else {
+                    return ''
+                };
+            }
+        }, {
+            field: 'Remark',
+            title: '备注',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Agent__Subscriber__username',
+            title: '代理名称',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'TikTokAccount__NickName',
+            title: '抖音昵称',
+            autoHide: false,
+            sortable: false,
+        }, ],
+    };
+
+    // basic demo
+    var localSelectorDemo = function (agentid) {
+        options.extensions = {
+            checkbox: {},
+        };
+
+        options.search = {
+            input: $('#generalDeviceSearch'),
+            onEnter: true,
+        };
+
+        options.data.source.read.params = {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            isagent: true,
+            agentid: agentid,
+        }
+
+        $('#kt_device_column').on('change', function () {
+            datatable.search($(this).val().toLowerCase(), 'devicecolumn');
+        });
+
+        $('#kt_device_column').selectpicker();
+
+        var datatable = $('#modal_datatable_device').KTDatatable(options);
+
+        datatable.on(
+            'kt-datatable--on-check kt-datatable--on-uncheck kt-datatable--on-layout-updated',
+            function (e) {
+                var ids = datatable.checkbox().getSelectedId();
+                var count = ids.length;
+                $('#kt_datatable_device_selected_number').html(count);
+                if (count > 0) {
+                    $('#kt_datatable_device_group_action_form').collapse('show');
+                    $("#kt_datatable_device_select_all").attr("disabled", false);
+                } else {
+                    $('#kt_datatable_device_group_action_form').collapse('hide');
+                    $("#kt_datatable_device_select_all").attr("disabled", true);
+                }
+            });
+
+
+        $('#kt_datatable_device_select_all').on('click', function () {
+            var ids = datatable.checkbox().getSelectedId();
+            var id_string = ''
+            for (var i = 0; i < ids.length; i++) {
+                id_string = id_string + ids[i] + ','
+            }
+            $.ajax({
+                type: "POST",
+                url: $("#getdevicenamebyids_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    ids: id_string
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#diviceModal').modal('hide');
+                        document.getElementById("id_edit_divice").value = response['ids'];
+                        document.getElementById("id_edit_device_id").value = response['ids'];
+                    }
+                }
+            });
+        });
+
+        // fix datatable layout after modal shown
+        var modal = $('#diviceModal');
+        datatable.hide();
+        var alreadyReloaded = false;
+        var alreadyInitSelect = false;
+        modal.on('shown.bs.modal', function () {
+            if (!alreadyReloaded) {
+                var modalContent = $(this).find('.modal-content');
+                datatable.spinnerCallback(true, modalContent);
+
+                datatable.reload();
+
+                datatable.on('kt-datatable--on-layout-updated', function () {
+                    if (!alreadyInitSelect) {
+                        if (document.getElementById("id_edit_device_id").value != '') {
+                            var storage = {};
+                            storage['selectedRows'] = document.getElementById("id_edit_device_id").value.split(',')
+                            storage['unselectedRows'] = []
+                            localStorage.setItem('modal_datatable_device-1-checkbox', JSON.stringify(storage));
+                        }
+                    }
+                    datatable.show();
+                    datatable.spinnerCallback(false, modalContent);
+                    datatable.redraw();
+                });
+
+                alreadyReloaded = true;
+            }
+        });
+
+    };
+
+
+
+    return {
+        // public functions
+        init: function (agentid) {
+            localSelectorDemo(agentid);
+        }
+    };
+}();
+
+jQuery(document).ready(function () {
+    KTDatatableRecordSelectionDemo.init()
+    initSearch();
+})
+
+var initSearch = function() {
+    //状态
+    $("[name='statusBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $("[name='statusBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            getStatusSearch()
+        }
+    })
+    //是否在线
+    $("[name='isonlineBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $("[name='isonlineBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            getIsonlineSearch()
+        }
+    })
+    //标签
+    $("[name='tagBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            var count = $("[name='tagBtn']").length
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='tagBtnAll']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            if ($("#tag .btn-primary").length == count) {
+                $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            }
+            getTagSearch()
+        } else if ($(this).hasClass('btn-primary')) {
+            $(this).removeClass('btn-primary')
+            $(this).addClass('btn-outline-hover-primary')
+            if ($("#tag .btn-primary").length == 0) {
+                $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+            }
+            getTagSearch()
+        }
+    })
+    $("[name='tagBtnAll']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            getTagSearch()
+        }
+    })
+}
+
+var initeditmodal = function () {
+    document.getElementById("id_edit_Subscriber__username").value = '';
+    document.getElementById("id_edit_UserSystem__username").value = '';
+    document.getElementById("id_edit_UserSystemPercent").value = '';
+    document.getElementById("id_edit_UserALevel__username").value = '';
+    document.getElementById("id_edit_UserALevelPercent").value = '';
+    document.getElementById("id_edit_UserBLevel__username").value = '';
+    document.getElementById("id_edit_UserBLevelPercent").value = '';
+    document.getElementById("id_edit_divice").value = '';
+    document.getElementById("id_edit_data_id").value = '';
+    document.getElementById("id_edit_device_id").value = '';
+}
+
+
+$('#editModal').on('hidden.bs.modal', function () {
+    window.location.reload();
+});
+
+
+var EditAgent = function () {
+    $.ajax({
+        type: "POST",
+        url: $("#edit_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            UserSystemPercent: document.getElementById("id_edit_UserSystemPercent").value,
+            UserALevelPercent: document.getElementById("id_edit_UserALevelPercent").value,
+            UserBLevelPercent: document.getElementById("id_edit_UserBLevelPercent").value,
+            id: document.getElementById("id_edit_data_id").value,
+            deviceid: document.getElementById("id_edit_device_id").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                window.location.href = response;
+            }
+        }
+    })
+}
+
+var getStatusSearch = function () {
+    var statusSearch = $("#status .btn-primary")[0].value
+    search('device_status', statusSearch)
+}
+
+var getIsonlineSearch = function () {
+    var isonlineSearch = $("#isonline .btn-primary")[0].value
+    search('isonline', isonlineSearch)
+}
+
+var getTagSearch = function () {
+    var tagSearch = ''
+    if ($("[name='tagBtnAll']").hasClass('btn-primary')) {
+        tagSearch = ''
+    } else {
+        var list = $("#tag .btn-primary")
+        for (var i = 0; i < list.length; i++) {
+            var per = list[i]
+            tagSearch = tagSearch + per.value + ','
+        }
+    }
+    search('tag', tagSearch)
+}
+
+var search = function (param, value) {
+    var datatable = $('#modal_datatable_device').KTDatatable()
+    var cur_query = datatable.getDataSourceParam('query')
+    if (cur_query == null) {
+        cur_query = {}
+        cur_query[param] = value
+    } else {
+        cur_query[param] = value
+    }
+    datatable.setDataSourceParam('query', cur_query)
+    datatable.load()
+}

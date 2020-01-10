@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+
+from django.urls import path
+from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    # begin 淘宝验证
+    path('root.txt', views.taobaoverify, name='taobaoverify'),
+    # end 淘宝验证
+    # begin 我的商品
+    path('MyCommodity/', views.mycommodity, name='MyCommodity'),
+    path('MyCommodity/GetMyCommodity', views.getmycommodity, name='GetMyCommodity'),
+    path('MyCommodity/DeleteMyCommodity', views.delete_mycommodity_by_ids, name='DeleteMyCommodity'),
+    path('MyCommodity/CreateMyCommodity', views.createmycommodity, name='CreateMyCommodity'),
+    path('MyCommodity/GetTaoBaoCommodity', views.gettaobaocommodity, name='GetTaoBaoCommodity'),
+    path('MyCommodity/GetMyCommodityById', views.getmycommoditybyid, name='GetMyCommodityById'),
+    path('MyCommodity/EditMyCommodity', views.editmycommodity, name='EditMyCommodity'),
+    # end 我的商品
+    # begin 商品类别
+    path('CommodityCategory', views.commoditycategory, name='CommodityCategory'),
+    path('CommodityCategory/GetCommodityCategory', views.getcommoditycategory, name='GetCommodityCategory'),
+    path('CommodityCategory/DeleteCommodityCategory', views.delete_commoditycategory_by_ids, name='DeleteCommodityCategory'),
+    path('CommodityCategory/CreateCommodityCategory', views.createcommoditycategory, name='CreateCommodityCategory'),
+    path('CommodityCategory/GetCommodityCategoryByID', views.getcommoditycategorybyid, name='GetCommodityCategoryByID'),
+    path('CommodityCategory/EditCommodityCategory', views.editcommoditycategory, name='EditCommodityCategory'),
+    # end 商品类别
+    path('DeviceManage/', views.devicemanage, name='DeviceManage'),
+    path('AccountDataAnalysis/', views.accountdataanalysis, name='AccountDataAnalysis'),
+    path('AccountList/', views.accountlist, name='AccountList'),
+    path('ALIConfig/', views.aliconfig, name='ALIConfig'),
+    path('AlreadySendVideo/', views.alreadysendvideo, name='AlreadySendVideo'),
+    path('BrowseMission/', views.browsemission, name='BrowseMission'),
+    path('CommodityDataAnalysis/', views.commoditydataanalysis, name='CommodityDataAnalysis'),
+    path('CommodityMissionList/', views.commoditymissionlist, name='CommodityMissionList'),
+    path('CommodityMissionManage/', views.commoditymissionmanage, name='CommodityMissionManage'),
+    path('CommoditySelection/', views.commodityselection, name='CommoditySelection'),
+    path('MyVideo/', views.myvideo, name='MyVideo'),
+    path('OrderCollect/', views.ordercollect, name='OrderCollect'),
+    path('PublishCommodityMission/', views.publishcommoditymission, name='PublishCommodityMission'),
+    path('VideoDataAnalysis/', views.videodataanalysis, name='VideoDataAnalysis'),
+    # begin 视频标签
+    path('VideoLabel/', views.videolabel, name='VideoLabel'),
+    # end 视频标签
+    path('VideoMission/', views.videomission, name='VideoMission'),
+    path('DailyMission/', views.dailymission, name='DailyMission'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

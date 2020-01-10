@@ -1,0 +1,29 @@
+$(document).ready(function () {
+    //复制邀请码
+    var copyBtn1 = new ClipboardJS('#id_copy_invite_code', {
+        text: function () {
+            return document.getElementById("id_invite_code").innerHTML.trim(); // 返回需要复制的内容
+        }
+    });
+
+    copyBtn1.on("success", function (e) {
+        // 复制成功
+        $('#copyinvitecodeModal').modal('show');
+    });
+
+    //复制邀请码
+    var copyBtn2 = new ClipboardJS('#id_copy_web', {
+        text: function () {
+            return document.getElementById("id_web").innerHTML.trim(); // 返回需要复制的内容
+        }
+    });
+
+    copyBtn2.on("success", function (e) {
+        // 复制成功
+        $('#copywebModal').modal('show');
+    });
+})
+
+var downloadQRCode = function () {
+
+}

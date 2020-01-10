@@ -1,0 +1,525 @@
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+import copy
+from django.urls import reverse
+from .models import *
+from .json_encode import *
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import top.api
+import re
+
+location_init = {
+    'IsMyAccountMenu': False,
+    'IsCommodityManageMenu': False,
+    'IsVideoManageMenu': False,
+    'IsMyAgentMenu': False,
+    'IsMissionMenu': False,
+    'IsIndexPage': False,
+    'IsDeviceManagePage': False,
+    'IsAccountDataAnalysisPage': False,
+    'IsAccountListPage': False,
+    'IsALIConfigPage': False,
+    'IsAlreadySendVideoPage': False,
+    'IsBrowseMissionPage': False,
+    'IsCommodityDataAnalysisPage': False,
+    'IsCommodityMissionListPage': False,
+    'IsCommodityMissionManagePage': False,
+    'IsCommoditySelectionPage': False,
+    'IsMyCommodityPage': False,
+    'IsMyVideoPage': False,
+    'IsOrderCollectPage': False,
+    'IsPublishCommodityMissionPage': False,
+    'IsVideoDataAnalysisPage': False,
+    'IsVideoLabelPage': False,
+    'IsVideoMissionPage': False,
+    'IsDailyMissionPage': False,
+    'IsCommodityCategoryPage': False,
+            }
+
+
+# begin 淘宝验证
+def taobaoverify(request):
+    return HttpResponse('f00c25378e73a2bbb92a9a1859fb7f05')
+# end 淘宝验证
+
+
+@login_required
+def index(request):
+    location = copy.deepcopy(location_init)
+    location['IsIndexPage'] = True
+    context = {'location': location}
+    return render(request, 'pages/index.html', context)
+
+
+@login_required
+def devicemanage(request):
+    location = copy.deepcopy(location_init)
+    location['IsDeviceManagePage'] = True
+    context = {'location': location}
+    return render(request, 'pages/DeviceManage.html', context)
+
+
+@login_required
+def accountdataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsAccountDataAnalysisPage'] = True
+    location['IsMyAccountMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/AccountDataAnalysis.html', context)
+
+
+@login_required
+def accountlist(request):
+    location = copy.deepcopy(location_init)
+    location['IsAccountListPage'] = True
+    location['IsMyAccountMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/AccountList.html', context)
+
+
+@login_required
+def aliconfig(request):
+    location = copy.deepcopy(location_init)
+    location['IsALIConfigPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/ALIConfig.html', context)
+
+
+@login_required
+def alreadysendvideo(request):
+    location = copy.deepcopy(location_init)
+    location['IsAlreadySendVideoPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/AlreadySendVideo.html', context)
+
+
+@login_required
+def browsemission(request):
+    location = copy.deepcopy(location_init)
+    location['IsBrowseMissionPage'] = True
+    context = {'location': location}
+    return render(request, 'pages/BrowseMission.html', context)
+
+
+@login_required
+def commoditydataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommodityDataAnalysisPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommodityDataAnalysis.html', context)
+
+
+@login_required
+def commoditymissionlist(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommodityMissionListPage'] = True
+    location['IsMissionMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommodityMissionList.html', context)
+
+
+@login_required
+def commoditymissionmanage(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommodityMissionManagePage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommodityMissionManage.html', context)
+
+
+@login_required
+def commodityselection(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommoditySelectionPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommoditySelection.html', context)
+
+
+@login_required
+def dailymission(request):
+    location = copy.deepcopy(location_init)
+    location['IsDailyMissionPage'] = True
+    context = {'location': location}
+    return render(request, 'pages/DailyMission.html', context)
+
+
+# begin 我的商品
+@login_required
+def mycommodity(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetMyCommodity'))
+    create_url = request.build_absolute_uri(reverse('Web:CreateMyCommodity'))
+    delete_url = request.build_absolute_uri(reverse('Web:DeleteMyCommodity'))
+    gettaobaocommodity_url = request.build_absolute_uri(reverse('Web:GetTaoBaoCommodity'))
+    get_by_id_url = request.build_absolute_uri(reverse('Web:GetMyCommodityById'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditMyCommodity'))
+    category = GoodClassification.objects.all()
+    location = copy.deepcopy(location_init)
+    location['IsMyCommodityPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'gettaobaocommodity_url': gettaobaocommodity_url, 'create_url': create_url,
+               'get_by_id_url': get_by_id_url, 'edit_url': edit_url, 'category': category,}
+    return render(request, 'pages/MyCommodity.html', context)
+
+
+@login_required
+def getmycommodity(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    type = request.POST.get('query[type]')
+
+    commodity_list = Goods.objects.all()
+
+    if generalSearch is not None:
+        commodity_list = commodity_list.filter(Title__contains=generalSearch)
+
+    if type is not None:
+        commodity_list = commodity_list.filter(GoodClassifications__id=type)
+
+    if field is not None or field != '':
+        if sort == 'desc':
+            field = '-' + field
+        commodity_list = commodity_list.order_by(field)
+
+    paginator = Paginator(commodity_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+            }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    commodity_result = page_result.object_list.values('id', 'Pic1',
+                                                      'Title', 'OutSidePlatformID', 'Price',
+                                                      'Sales', 'CommissionPercent', 'OutSidePlatformURL',
+                                                      'CreateTime')
+    data = []
+    for i in range(len(commodity_result)):
+        commodity_id = commodity_result[i]['id']
+        commodity = Goods.objects.get(id=commodity_id)
+        CategoryString = commodity.GetCategoryString()
+        commodity_result[i]['CategoryString'] = CategoryString
+        data.append(commodity_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_mycommodity_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        Goods.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:MyCommodity'))
+
+
+@login_required
+def createmycommodity(request):
+    try:
+        pic1 = request.POST.get('pic1')
+        pic2 = request.POST.get('pic2')
+        pic3 = request.POST.get('pic3')
+        pic4 = request.POST.get('pic4')
+        pic5 = request.POST.get('pic5')
+        url = request.POST.get('url')
+        title = request.POST.get('title')
+        price = request.POST.get('price')
+        sales = request.POST.get('sales')
+        commissionpercent = request.POST.get('commissionpercent')
+        outsideplatformid = request.POST.get('outsideplatformid')
+        category = request.POST.get('category')
+        good = Goods()
+        good.Pic1 = pic1
+        good.Pic2 = pic2
+        good.Pic3 = pic3
+        good.Pic4 = pic4
+        good.Pic5 = pic5
+        good.Title = title
+        good.OutSidePlatformID = outsideplatformid
+        good.Price = price
+        good.Sales = sales
+        good.CommissionPercent = commissionpercent
+        good.OutSidePlatformURL = url
+        good.save()
+        if category is not None and category != '':
+            category_list = category[:-1].split(',')
+            if len(category_list) > 0:
+                for i in range(len(category_list)):
+                    category_id = category_list[i]
+                    category = GoodClassification.objects.get(id=category_id)
+                    good.GoodClassifications.add(category)
+        return HttpResponse(reverse('Web:MyCommodity'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def gettaobaocommodity(request):
+    url = request.POST.get('url')
+    commodity_id = re.search(r'(\?|&)id=(\d*)', url).group(2)
+
+    req = top.api.TbkItemInfoGetRequest()
+    req.set_app_info(top.appinfo('28119282', '39e5038c96d0d1135f25783ba0ef6585'))
+
+    req.num_iids = commodity_id
+    try:
+        resp = req.getResponse()
+        print(resp)
+        pic1 = resp['tbk_item_info_get_response']['results']['n_tbk_item'][0]['pict_url']
+        pic2 = ''
+        pic3 = ''
+        pic4 = ''
+        pic5 = ''
+        small_pic_list = resp['tbk_item_info_get_response']['results']['n_tbk_item'][0]['small_images']['string']
+        if len(small_pic_list) > 0:
+            pic2 = small_pic_list[0]
+        if len(small_pic_list) > 1:
+            pic3 = small_pic_list[1]
+        if len(small_pic_list) > 2:
+            pic4 = small_pic_list[2]
+        if len(small_pic_list) > 3:
+            pic5 = small_pic_list[3]
+        title = resp['tbk_item_info_get_response']['results']['n_tbk_item'][0]['title']
+        price = resp['tbk_item_info_get_response']['results']['n_tbk_item'][0]['reserve_price']
+        outsideplatformid = commodity_id
+        context = {'pic1': pic1, 'pic2': pic2, 'pic3': pic3, 'pic4': pic4, 'pic5': pic5,
+                   'title': title, 'price': price, 'outsideplatformid': outsideplatformid}
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editmycommodity(request):
+    commodity_id = request.POST.get('id')
+    price = request.POST.get('price')
+    sales = request.POST.get('sales')
+    commissionpercent = request.POST.get('commissionpercent')
+    category = request.POST.get('category')
+    commodity = Goods.objects.get(id=commodity_id)
+    commodity.Price = price
+    commodity.Sales = sales
+    commodity.CommissionPercent = commissionpercent
+    commodity.save()
+    commodity.GoodClassifications.clear()
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                category = GoodClassification.objects.get(id=category_id)
+                commodity.GoodClassifications.add(category)
+    return HttpResponse(reverse('Web:MyCommodity'))
+
+
+@login_required
+def getmycommoditybyid(request):
+    commodity_id = request.POST.get('id')
+    commodity = Goods.objects.get(id=commodity_id)
+    CategoryId = commodity.GetCategoryId()
+    context = {
+        'pic1': commodity.Pic1,
+        'pic2': commodity.Pic2,
+        'pic3': commodity.Pic3,
+        'pic4': commodity.Pic4,
+        'pic5': commodity.Pic5,
+        'url': commodity.OutSidePlatformURL,
+        'title': commodity.Title,
+        'price': commodity.Price,
+        'sales': commodity.Sales,
+        'commissionpercent': commodity.CommissionPercent,
+        'outsideplatformid': commodity.OutSidePlatformID,
+        'dataid': commodity.id,
+        'categoryid': CategoryId,
+    }
+    if commodity is not None:
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+# end 我的商品
+
+# begin 商品类别
+@login_required
+def commoditycategory(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetCommodityCategory'))
+    create_url = request.build_absolute_uri(reverse('Web:CreateCommodityCategory'))
+    delete_url = request.build_absolute_uri(reverse('Web:DeleteCommodityCategory'))
+    get_by_id_url = request.build_absolute_uri(reverse('Web:GetCommodityCategoryByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditCommodityCategory'))
+    location = copy.deepcopy(location_init)
+    location['IsCommodityCategoryPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'create_url': create_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/CommodityCategory.html', context)
+
+
+@login_required
+def getcommoditycategory(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = GoodClassification.objects.all()
+
+    if field is not None or field != '':
+        if sort == 'desc':
+            field = '-' + field
+        commodity_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+            }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_commoditycategory_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        GoodClassification.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:CommodityCategory'))
+
+
+@login_required
+def createcommoditycategory(request):
+    try:
+        name = request.POST.get('name')
+        goodClassification = GoodClassification()
+        goodClassification.Name = name
+        goodClassification.save()
+        return HttpResponse(reverse('Web:CommodityCategory'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editcommoditycategory(request):
+    data_id = request.POST.get('id')
+    name = request.POST.get('name')
+    commodity = GoodClassification.objects.get(id=data_id)
+    commodity.Name = name
+    commodity.save()
+    return HttpResponse(reverse('Web:CommodityCategory'))
+
+
+@login_required
+def getcommoditycategorybyid(request):
+    data_id = request.POST.get('id')
+    data = GoodClassification.objects.get(id=data_id)
+    context = {
+        'name': data.Name,
+        'dataid': data.id,
+    }
+    if data is not None:
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+# end 商品类别
+
+
+@login_required
+def myvideo(request):
+    location = copy.deepcopy(location_init)
+    location['IsMyVideoPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/MyVideo.html', context)
+
+
+@login_required
+def ordercollect(request):
+    location = copy.deepcopy(location_init)
+    location['IsOrderCollectPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/OrderCollect.html', context)
+
+
+@login_required
+def publishcommoditymission(request):
+    location = copy.deepcopy(location_init)
+    location['IsPublishCommodityMissionPage'] = True
+    location['IsMissionMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/PublishCommodityMission.html', context)
+
+
+@login_required
+def videodataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsVideoDataAnalysisPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/VideoDataAnalysis.html', context)
+
+
+@login_required
+def videolabel(request):
+    location = copy.deepcopy(location_init)
+    location['IsVideoLabelPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/VideoLabel.html', context)
+
+
+@login_required
+def videomission(request):
+    location = copy.deepcopy(location_init)
+    location['IsVideoMissionPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/VideoMission.html', context)
+

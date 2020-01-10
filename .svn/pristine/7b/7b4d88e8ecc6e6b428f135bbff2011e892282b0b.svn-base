@@ -1,0 +1,92 @@
+"use strict";
+
+// Class Definition
+var KTLoginPage = function () {
+
+	var showErrorMsg = function(form, type, msg) {
+        var alert = $('<div class="col-lg-12 col-xl-12 col-sm-12 col-md-12 alert alert-bold alert-solid-' + type + ' alert-dismissible" role="alert">\
+			<div class="alert-text">'+msg+'</div>\
+			<div class="alert-close">\
+                <i class="flaticon2-cross kt-icon-sm" data-dismiss="alert"></i>\
+            </div>\
+		</div>');
+
+        form.find('.alert').remove();
+        alert.prependTo(form);
+        KTUtil.animateClass(alert[0], 'fadeIn animated');
+	}
+
+	// Private Functions
+	var handleLoginFormSubmit = function () {
+		$('#confirm').click(function (e) {
+			e.preventDefault();
+
+			var btn = $(this);
+			var form = $('#kt_profile_form');
+
+			form.validate({
+				rules: {
+					oldpassword: {
+						required: true
+					},
+					password1: {
+						required: true
+					},
+					password2: {
+						required: true
+					},
+				},
+			});
+
+
+			if (!form.valid()) {
+				return;
+			}
+
+			KTApp.progress(btn[0]);
+
+			setTimeout(function () {
+				KTApp.unprogress(btn[0]);
+			}, 2000);
+
+			// ajax form submit:  http://jquery.malsup.com/form/
+			form.ajaxSubmit({
+                type: 'POST',
+                url: $("#change_password_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                },
+				success: function (response, status, xhr, $form) {
+					// similate 2s delay
+					if (response.status == 'NG') {
+					    setTimeout(function () {
+						KTApp.unprogress(btn[0]);
+						showErrorMsg(form, 'danger', response["msg"]);
+					    }, 1000);
+					} else {
+						setTimeout(function () {
+							KTApp.unprogress(btn[0]);
+							showErrorMsg(form, 'success', response["msg"]);
+							}, 1000);
+                        document.getElementById("id_oldpassword").value='';
+                        document.getElementById("id_password1").value='';
+                        document.getElementById("id_password2").value='';
+					}
+				}
+			});
+		});
+	}
+
+	// Public Functions
+	return {
+		// public functions
+		init: function () {
+			handleLoginFormSubmit();
+		}
+	};
+}();
+
+// Class Initialization
+jQuery(document).ready(function () {
+	KTLoginPage.init();
+});

@@ -1,0 +1,161 @@
+"use strict";
+// Class definition
+
+var KTDatatableRecordSelectionDemo = function() {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#agent_withdraw_list_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            scroll: false, // enable/disable datatable scroll both horizontal and vertical when needed.
+            footer: false, // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                          first: '首页',
+                          prev: '前一页',
+                          next: '下一页',
+                          last: '尾页',
+                          more: '更多',
+                          input: '请输入页码',
+                          select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'ApplyDate',
+            title: '申请日期',
+            type: 'date',
+            format: 'MM/DD/YYYY',
+            autoHide: false,
+            sortable: false,
+            width: 60,
+        }, {
+            field: 'Money',
+            title: '提现金额',
+            autoHide: false,
+            sortable: false,
+            width: 30,
+        },{
+            field: 'IsPass',
+            title: '状态',
+            autoHide: false,
+            sortable: false,
+            width: 60,
+            template: function (row) {
+                var status = {
+                    '0': {
+                        'title': '待审批',
+                        'class': 'kt-badge--info'
+                    },
+                    '1': {
+                        'title': '已通过',
+                        'class': ' kt-badge--success'
+                    },
+                    '2': {
+                        'title': '未通过',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.IsPass].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.IsPass].title +
+                    '</span>';
+            },
+        },{
+            field: 'ApproveDate',
+            title: '审批日期',
+            type: 'date',
+            format: 'MM/DD/YYYY',
+            sortable: false,
+        },],
+    };
+
+    // basic demo
+    var localSelectorDemo = function() {
+        var datatable = $('#datatable_agent_withdraw').KTDatatable(options);
+    };
+
+    return {
+        // public functions
+        init: function() {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+    KTDatatableRecordSelectionDemo.init();
+});
+
+var showErrorMsg = function(form, type, msg) {
+    var alert = $('<div class="col-lg-12 col-xl-12 col-md-12 col-sm-12 alert alert-bold alert-solid-' + type + ' alert-dismissible" role="alert">\
+        <div class="alert-text">'+msg+'</div>\
+        <div class="alert-close">\
+            <i class="flaticon2-cross kt-icon-sm" data-dismiss="alert"></i>\
+        </div>\
+    </div>');
+
+    form.find('.alert').remove();
+    alert.prependTo(form);
+    KTUtil.animateClass(alert[0], 'fadeIn animated');
+}
+
+//申请提现
+var ApplyForWithdraw = function() {
+    var btn = $(this)
+    var form = $('#withdrawform');
+    $.ajax({
+        type: "POST",
+        url: $("#create_withdraw_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            money: document.getElementById("id_money").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response['status'] != 'NG') {
+                window.location.href = response['msg'];
+            } else {
+                setTimeout(function () {
+                    KTApp.unprogress(btn[0]);
+                    showErrorMsg(form, 'danger', response["msg"]);
+                    }, 1000);
+            }
+		}
+    })
+}

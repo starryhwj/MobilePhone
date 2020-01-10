@@ -1,0 +1,423 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 我的收益{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<!-- begin:: Content -->
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <!--begin::Portlet-->
+    <div class="kt-portlet">
+        <div class="kt-portlet__head">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">我的收益</h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-group">
+                    <a class="btn btn-sm btn-icon btn-brand btn-circle" href="/"><i class="la la-angle-left"></i></a>
+                    <a class="btn btn-sm btn-icon btn-success btn-circle" href="/AgentIncome"><i
+                            class="la la-refresh"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet kt-widget kt-widget--fit kt-widget--general-3">
+            <div class="kt-portlet__body">
+                <div class="kt-widget__top">
+                    <div class="kt-widget__wrapper">
+                        <div class="kt-widget__label">
+                            <span class="kt-widget__desc">
+                                账户余额
+                            </span>
+                            <h1>
+                                {{ user.money }}
+                            </h1>
+                        </div>
+                        <div class="kt-widget__toolbar">
+                            <a href="/AgentWithdraw" class="btn btn-brand btn-sm">提现</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet kt-widget kt-widget--fit kt-widget--general-3">
+            <div class="kt-portlet__body">
+                <div class="kt-widget__top">
+                    <div class="kt-widget__wrapper">
+                        <div class="kt-widget__stats" style="margin: auto;">
+                            <div class="kt-widget__stat" href="#" style="margin-right: 1rem;">
+                                <span class="kt-widget__caption" style="margin: 0 0.2rem; font-size: 16px;">今日预估</span>
+                                <span class="kt-widget__value"
+                                    style="margin: 0 0.2rem; font-size: 20px;">{{ TodayTotalMoney }}</span>
+                            </div>
+                            <div class="kt-widget__stat" href="#" style="margin-right: 1rem;">
+                                <span class="kt-widget__caption" style="margin: 0 0.2rem; font-size: 16px;">今日订单</span>
+                                <span class="kt-widget__value"
+                                    style="margin: 0 0.2rem; font-size: 20px;">{{ TodayTotalOrderCount }}</span>
+                            </div>
+                            <div class="kt-widget__stat" href="#">
+                                <span class="kt-widget__caption" style="margin: 0 0.2rem; font-size: 16px">上月结算</span>
+                                <span class="kt-widget__value"
+                                    style="margin: 0 0.2rem; font-size: 20px;">{{ LastMonthTotalMoney }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="kt-portlet">
+        <div class="kt-portlet__head">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">付款订单统计</h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <ul class="nav nav-tabs nav-tabs-line" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#kt_tabs_1_1" role="tab"
+                        style="font-size: 16px;">今天</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#kt_tabs_1_2" role="tab" style="font-size: 16px;">昨天</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#kt_tabs_1_3" role="tab"
+                        style="font-size: 16px;">近7天</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#kt_tabs_1_4" role="tab" style="font-size: 16px;">本月</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#kt_tabs_1_5" role="tab" style="font-size: 16px;">上月</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="kt_tabs_1_1" role="tabpanel">
+                    <div class="kt-widget-2">
+                        <div class="kt-widget-2__content">
+                            <div class="row">
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ TodayMyselfMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ TodayABLevelMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ TodayMyselfOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ TodayABLevelOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="kt_tabs_1_2" role="tabpanel">
+                    <div class="kt-widget-2">
+                        <div class="kt-widget-2__content">
+                            <div class="row">
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ YestodayMyselfMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ YestodayABLevelMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ YestodayMyselfOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ YestodayABLevelOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="kt_tabs_1_3" role="tabpanel">
+                    <div class="kt-widget-2">
+                        <div class="kt-widget-2__content">
+                            <div class="row">
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ SevendayMyselfMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ SevendayABLevelMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ SevendayMyselfOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ SevendayABLevelOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="kt_tabs_1_4" role="tabpanel">
+                    <div class="kt-widget-2">
+                        <div class="kt-widget-2__content">
+                            <div class="row">
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ CurrentMonthMyselfMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ CurrentMonthABLevelMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ CurrentMonthMyselfOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ CurrentMonthABLevelOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="kt_tabs_1_5" role="tabpanel">
+                    <div class="kt-widget-2">
+                        <div class="kt-widget-2__content">
+                            <div class="row">
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ LastMonthMyselfMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理贡献
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ LastMonthABLevelMoney }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            自身订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ LastMonthMyselfOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-6">
+                                    <div class="kt-widget-2__item">
+                                        <div class="kt-widget-2__item-title-big">
+                                            代理订单量
+                                        </div>
+                                        <div class="kt-widget-2__item-stats">
+                                            <div class="kt-widget-2__item-info">
+                                                <div class="kt-widget-2__item-text-big">
+                                                    {{ LastMonthABLevelOrderCount }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--end::Portlet-->
+</div>
+<!-- end:: Content -->
+{% endblock content %}
+{% block js %}
+{% endblock js %}

@@ -1,0 +1,104 @@
+.search-section {
+  padding: 0;
+  margin: 0;
+}
+
+.search-section.search-section--space-sm {
+  margin-bottom: 1rem;
+}
+
+.search-section.search-section--space-md {
+  margin-bottom: 2rem;
+}
+
+.search-section.search-section--space-lg {
+  margin-bottom: 2.5rem;
+}
+
+.search-section.search-section--space-xl {
+  margin-bottom: 3rem;
+}
+
+.search-section .search-section__title {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 500;
+  padding: 0;
+  margin: 0 0 1.75rem 0;
+  color: #48465b;
+}
+
+.search-section .search-section__title.search-section__title-sm {
+  font-size: 1.1rem;
+}
+
+.search-section .search-section__title.search-section__title-md {
+  font-size: 1.4rem;
+}
+
+.search-section .search-section__title.search-section__title-lg {
+  font-size: 1.5rem;
+}
+
+.search-section .search-section__desc {
+  display: block;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  color: #595d6e;
+}
+
+.search-section .search-section__info {
+  display: block;
+  font-size: 1rem;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  color: #595d6e;
+}
+
+.search-section .search-section__content {
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
+.search-section .search-section__content.search-section__content--border--top {
+  padding: 0.5rem;
+  border-left: 3px solid #ebedf2;
+  border-right: 3px solid #ebedf2;
+  border-top: 3px solid #ebedf2;
+  border-bottom: 1px solid #ebedf2;
+}
+
+.search-section .search-section__content.search-section__content--border--middle {
+  padding: 0.5rem;
+  border-left: 3px solid #ebedf2;
+  border-right: 3px solid #ebedf2;
+  border-bottom: 1px solid #ebedf2;
+}
+
+.search-section .search-section__content.search-section__content--border--bottom {
+  padding: 0.5rem;
+  border-left: 3px solid #ebedf2;
+  border-right: 3px solid #ebedf2;
+  border-bottom: 3px solid #ebedf2;
+}
+
+.search-section .search-section__content.search-section__content--border--all {
+  padding: 0.5rem;
+  border: 3px solid #ebedf2;
+}
+
+.search-section .search-section__content.search-section__content--x-fit {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.search-section .search-section__content.search-section__content--fit {
+  padding: 0;
+}
+
+.search-section.search-section--last .search-section__content {
+  padding-bottom: 1.5rem;
+}

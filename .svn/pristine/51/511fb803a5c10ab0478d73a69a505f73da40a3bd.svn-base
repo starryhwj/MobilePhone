@@ -1,0 +1,280 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 编辑任务模板{% endblock title %}
+{% block css %}
+<link href="{% static 'plugins/custom/jquery-ui/jquery-ui.bundle.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet" type="text/css" />
+{% endblock css %}
+{% block subheader %}编辑任务模板{% endblock subheader %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="row">
+        <div class="col-lg-2">
+
+            <!--begin::Portlet-->
+            <div class="kt-portlet" id="kt_portlet">
+                <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                        <span class="kt-portlet__head-icon">
+                            <i class="flaticon-map-location"></i>
+                        </span>
+                        <h3 class="kt-portlet__head-title">
+                            可选任务
+                        </h3>
+                    </div>
+                </div>
+                <div class="kt-portlet__body">
+                    <div id="kt_calendar_external_events" class="fc-unthemed">
+                        <div class='fc-draggable-handle kt-badge kt-badge--lg kt-badge--primary kt-badge--inline kt-margin-b-15'
+                            data-color="fc-event-primary">养号任务</div><br>
+                        <div class='fc-draggable-handle kt-badge kt-badge--lg kt-badge--warning kt-badge--inline kt-margin-b-15'
+                            data-color="fc-event-warning">刷粉任务</div><br>
+                        <div class='fc-draggable-handle kt-badge kt-badge--lg kt-badge--success kt-badge--inline kt-margin-b-15'
+                            data-color="fc-event-success">关注任务</div><br>
+                    </div>
+                </div>
+            </div>
+
+            <!--end::Portlet-->
+        </div>
+        <div class="col-lg-10">
+
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                        <span class="kt-portlet__head-icon">
+                            <i class="flaticon-map-location"></i>
+                        </span>
+                        <h3 class="kt-portlet__head-title">
+                            {{ template_name }}
+                        </h3>
+                    </div>
+                    <div class="kt-portlet__head-toolbar">
+                        <div class="kt-portlet__head-wrapper">
+                            <button class="btn btn-primary btn-font-sm" onclick="back()">
+                                <i class="flaticon2-check-mark"></i>
+                                完成
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="kt-portlet__body">
+                    <div id="kt_calendar"></div>
+                </div>
+            </div>
+
+            <!--end::Portlet-->
+        </div>
+        <!-- begin: Modal -->
+        <div class="modal fade" id="editMaintenanceNumberMissionModal" tabindex="-1" role="dialog"
+            aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">编辑养号任务计划</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form class="kt-login-v1__form kt-form" autocomplete="off" method="post"
+                        enctype="multipart/form-data">
+                        <div class="modal-body">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>任务说明</label>
+                                <input type='text' class="form-control"
+                                    id="id_edit_MaintenanceNumberMission_description" name="edit_description">
+                            </div>
+                            <div class="form-group" style="display: none">
+                                <label>数据ID</label>
+                                <input type='text' class="form-control" id="id_MaintenanceNumberMission_data_id"
+                                    name="data_id">
+                            </div>
+                            <div class="form-group" style="display: none">
+                                <label>数据类型</label>
+                                <input type='text' class="form-control" id="id_MaintenanceNumberMission_data_type"
+                                    name="data_type">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-danger"
+                                onclick="DeleteMaintenanceNumberMission()">删除</button>
+                            <button type="button" class="btn btn-brand"
+                                onclick="EditMaintenanceNumberMission()">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade bd-example-modal-lg" id="editscanmissionModal" tabindex="-1" role="dialog"
+            aria-labelledby="editmissionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editmissionModalLabel">编辑刷粉任务计划</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                        id="kt_edit_scan_mission_form" method="post" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            {% csrf_token %}
+                            <div class="form-group row">
+                                <div class="col-lg-12">
+                                    <label>任务说明</label>
+                                    <input type='text' class="form-control" id="id_edit_scan_mission_description"
+                                        name="edit_scan_mission_description">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-lg-6">
+                                    <label>刷粉人数上限(默认{{ config.defaultscanpeoplelimit }}个)</label>
+                                    <input type='text' class="form-control" id="id_edit_scan_mission_peoplelimit"
+                                        name="edit_scan_mission_peoplelimit">
+                                </div>
+                                <div class="col-lg-6">
+                                    <label>点赞与评论间隔人数</label>
+                                    <input type='text' class="form-control" id="id_edit_scan_mission_interval"
+                                        name="edit_scan_mission_interval">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>粉丝性别:</label>
+                                <div class="kt-checkbox-inline" id='id_edit_scan_mission_fansex'>
+                                    <label class="kt-checkbox kt-checkbox--brand">
+                                        <input type="checkbox" id='id_edit_scan_mission_fansex_male'
+                                            name="edit_scan_mission_fansex"> 男
+                                        <span></span>
+                                    </label>
+                                    <label class="kt-checkbox kt-checkbox--brand">
+                                        <input type="checkbox" id='id_edit_scan_mission_fansex_female'
+                                            name="edit_scan_mission_fansex"> 女
+                                        <span></span>
+                                    </label>
+                                    <label class="kt-checkbox kt-checkbox--brand">
+                                        <input type="checkbox" id='id_edit_scan_mission_fansex_none'
+                                            name="edit_scan_mission_fansex"> 无
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-form-label">评论(用回车分隔不同的评论)</label>
+                                <textarea class="form-control" id="id_edit_scan_mission_commenttext"
+                                    rows="3"></textarea>
+                            </div>
+                            <div class="form-group" style="display: none">
+                                <label>数据ID</label>
+                                <input type='text' class="form-control" id="id_edit_scan_mission_data_id"
+                                    name="edit_scan_mission_data_id">
+                            </div>
+                            <div class="form-group" style="display: none">
+                                <label>数据类型</label>
+                                <input type='text' class="form-control" id="id_scan_mission_data_type"
+                                    name="scan_mission_data_type">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-danger" onclick="DeleteScanMission()">删除</button>
+                            <button type="button" class="btn btn-brand" onclick="EditScanMission()">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade bd-example-modal-lg" id="editfollowmissionModal" tabindex="-1" role="dialog"
+        aria-labelledby="editmissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editmissionModalLabel">编辑关注任务计划</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                    id="kt_edit_follow_mission_form" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="form-group row">
+                            <div class="col-lg-12">
+                                <label>任务说明</label>
+                                <input type='text' class="form-control" id="id_edit_follow_mission_description"
+                                    name="edit_follow_mission_description">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-lg-12">
+                                <label>刷粉人数上限(默认{{ config.defaultfollowpeoplelimit }}个)</label>
+                                <input type='text' class="form-control" id="id_edit_follow_mission_peoplelimit"
+                                    name="edit_follow_mission_peoplelimit">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>粉丝性别:</label>
+                            <div class="kt-checkbox-inline" id='id_edit_follow_mission_fansex'>
+                                <label class="kt-checkbox kt-checkbox--brand">
+                                    <input type="checkbox" id='id_edit_follow_mission_fansex_male'
+                                        name="edit_follow_mission_fansex"> 男
+                                    <span></span>
+                                </label>
+                                <label class="kt-checkbox kt-checkbox--brand">
+                                    <input type="checkbox" id='id_edit_follow_mission_fansex_female'
+                                        name="edit_follow_mission_fansex"> 女
+                                    <span></span>
+                                </label>
+                                <label class="kt-checkbox kt-checkbox--brand">
+                                    <input type="checkbox" id='id_edit_follow_mission_fansex_none'
+                                        name="edit_follow_mission_fansex"> 无
+                                    <span></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group" style="display: none">
+                            <label>数据ID</label>
+                            <input type='text' class="form-control" id="id_edit_follow_mission_data_id"
+                                name="edit_follow_mission_data_id">
+                        </div>
+                        <div class="form-group" style="display: none">
+                            <label>数据类型</label>
+                            <input type='text' class="form-control" id="id_follow_mission_data_type"
+                                name="follow_mission_data_type">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-danger" onclick="DeleteFollowMission()">删除</button>
+                        <button type="button" class="btn btn-brand" onclick="EditFollowMission()">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+        <!-- end: Modal -->
+        <!--begin: HideData-->
+        <div class="btn btn-clean kt-hidden" id="record_date">{{ record_date }}</div>
+        <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+        <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+        <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+        <div class="btn btn-clean kt-hidden" id="get_events_by_template_id_url">{{ get_events_by_template_id_url }}
+        </div>
+        <div class="btn btn-clean kt-hidden" id="template_id">{{ template_id }}</div>
+        <div class="btn btn-clean kt-hidden" id="template_url">{{ template_url }}</div>
+        <div class="btn btn-clean kt-hidden" id="get_event_by_id_url">{{ get_event_by_id_url }}</div>
+        <div class="btn btn-clean kt-hidden" id="editeventdetail">{{ editeventdetail }}</div>
+        {% csrf_token %}
+        <!--end: HideData-->
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'plugins/custom/jquery-ui/jquery-ui.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/fullcalendar/fullcalendar.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/MissionManage/EditMissionPlanTemplate.js' %}" type="text/javascript"></script>
+{% endblock js %}

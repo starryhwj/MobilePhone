@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+# filename: Users/form.py
+from django.contrib.auth.forms import UserCreationForm
+from django.forms import PasswordInput, DateInput
+from .models import User
+from django import forms
+
+
+class CustomUserCreationForm(UserCreationForm):
+    CHOICES = [('0', '男'), ('1', '女')]
+    leadercode = forms.CharField(
+        label="邀请码"
+    )
+    true_name = forms.CharField()
+    sex = forms.ChoiceField(widget=forms.RadioSelect, choices=CHOICES, label='sex')
+    birthday = forms.DateField()
+    qq = forms.CharField()
+    wechat = forms.CharField()
+    wechat_nickname = forms.CharField()
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '用户名',
+                                                                'autocomplete': 'off'})
+        self.fields['password1'].widget = PasswordInput(attrs={'class': 'form-control',
+                                                               'placeholder': '输入密码',
+                                                               'autocomplete': 'off'})
+        self.fields['password2'].widget = PasswordInput(attrs={'class': 'form-control', 'placeholder': '请再次输入密码',
+                                                               'autocomplete': 'off'})
+        self.fields['leadercode'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入邀请码',
+                                                               'autocomplete': 'off'})
+        self.fields['true_name'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入姓名',
+                                                               'autocomplete': 'off'})
+        self.fields['birthday'].widget = DateInput(attrs={'class': 'form-control', 'placeholder': '请输入出生日期，例如：1949-10-1',
+                                                               'autocomplete': 'off'}, format='%Y-%m-%d')                                                                                                                                                                            
+        self.fields['qq'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入QQ号',
+                                                               'autocomplete': 'off'})
+        self.fields['wechat'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入微信号',
+                                                               'autocomplete': 'off'})
+        self.fields['wechat_nickname'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入微信昵称',
+                                                               'autocomplete': 'off'})
+
+                                                                                                                                                                                                                                                                                                                       
+
+                                                               

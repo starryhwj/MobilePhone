@@ -1,0 +1,130 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 签名管理{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    签名管理
+                </h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-form__group kt-form__group--inline">
+                                    <div class="kt-form__label">
+                                        <label style="width: 30px;">列名</label>
+                                    </div>
+                                    <div class="kt-form__control">
+                                        <select class="form-control bootstrap-select" id="kt_signaturemanage_column">
+                                            <option value="-1">请选择</option>
+                                            <option value="nickname">昵称</option>
+                                            <option value="mobileid">设备ID</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入.."
+                                        id="generalSignatureManageSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_signature_manage"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade" id="createModal" tabindex="-1" role="dialog"
+                aria-labelledby="createmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createmissionModalLabel">新建修改签名任务</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_create_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>抖音账号</label>
+                                        <input type='text' class="form-control" id="id_create_nickname"
+                                            name="create_nickname" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>个性签名</label>
+                                        <input type='text' class="form-control" id="id_create_old_signature"
+                                            name="create_old_signature" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>更新签名</label>
+                                        <input type='text' class="form-control" id="id_create_new_signature"
+                                            name="create_new_signature">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_edit_account_data_id"
+                                        name="edit_account_data_id">
+                                    <label>设备ID</label>
+                                    <input type='text' class="form-control" id="id_edit_device_id"
+                                        name="edit_device_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="CreateChangeSignatureMission()"
+                                    id="id_edit_mission" name="edit_mission">发布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_mission_url">{{ create_mission_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="devicemanage_url">{{ devicemanage_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="acountlist_url">{{ acountlist_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/SignatureManage/SignatureManagePage.js' %}" type="text/javascript"></script>
+{% endblock js %}

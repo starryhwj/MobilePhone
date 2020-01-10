@@ -1,0 +1,332 @@
+"use strict";
+// Class definition
+
+var KTDatatableRecordSelectionDemo = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            sortable: false,
+            autoHide: false,
+            width: 50,
+            textAlign: 'center',
+        }, {
+            field: 'NickName',
+            title: '昵称',
+            autoHide: false,
+            width: 50,
+        }, {
+            field: 'CategoryString',
+            title: '类型',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var cat = row.CategoryString
+                var cat_list = cat.split(',')
+                if (cat_list != null && cat_list.length > 0) {
+                    var html_string = ''
+                    for (var i = 0; i < cat_list.length; i++) {
+                        var per = cat_list[i]
+                        html_string = html_string + ' ' +
+                            '<span class="badge badge-primary">' + per +
+                            '</span>';
+                    }
+                    return html_string
+                } else {
+                    return ''
+                };
+            },
+        }, {
+            field: 'PID',
+            title: 'PID',
+            autoHide: false,
+            sortable: false,
+            width: 300,
+        }, {
+            field: 'Status',
+            title: '状态',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    '0': {
+                        'title': '可用',
+                        'class': 'kt-badge--success'
+                    },
+                    '1': {
+                        'title': '不可用',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Status].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Status].title +
+                    '</span>';
+            },
+        }, {
+            field: 'Remark',
+            title: '备注',
+            autoHide: false,
+        }, {
+            field: 'Actions',
+            title: '操作',
+            sortable: false,
+            width: 110,
+            overflow: 'visible',
+            autoHide: false,
+            textAlign: 'center',
+            template: function (row) {
+                if (row.Status == 0) {
+                    return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="详情" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-file"></i>\
+                    </button>\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="删除" data-delete-id="' + row.id + '">\
+                        <i class="flaticon2-delete"></i>\
+                    </button>\
+                ';
+                } else {
+                    return ''
+                }
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+
+        options.search = {
+            input: $('#generalALIConfigSearch'),
+            onEnter: true,
+        };
+
+        var datatable = $('#local_record_selection').KTDatatable(options);
+
+        $('#kt_aliconfig_status').on('change', function () {
+            datatable.search($(this).val().toLowerCase(), 'aliconfigstatus');
+        });
+
+        $('#kt_aliconfig_status').selectpicker();
+
+        datatable.on('click', '[data-delete-id]', function (row) {
+            var id = $(this).data('delete-id');
+            swal.fire({
+                title: '确认删除?',
+                text: "确认后无法撤销！",
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '是',
+                cancelButtonText: '否'
+            }).then(function (result) {
+                if (result.value) {
+                    var idstring = id + ','
+                    $.ajax({
+                        type: "POST",
+                        url: $("#delete_url").text(),
+                        data: {
+                            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                            ids: idstring
+                        },
+                        success: function (response, status, xhr, $form) {
+                            datatable.reload()
+                        }
+                    });
+                };
+            })
+        });
+
+        datatable.on('click', '[data-edit-id]', function () {
+            var id = $(this).data('edit-id');
+            initeditmodal();
+            $.ajax({
+                type: "POST",
+                url: $("#get_by_id_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#editModal').modal('show');
+                        document.getElementById("id_edit_nick_name").value = response['nickname'];
+                        document.getElementById("id_edit_pid").value = response['pid'];
+                        document.getElementById("id_edit_remark").value = response['remark'];
+                        document.getElementById("id_data_id").value = response['dataid'];
+                        var categoryId = response['categoryid'];
+                        var categoryIdList = categoryId.split(',')
+                        var select = document.getElementById('id_eidt_category');
+                        for (var i = 0; i < categoryIdList.length; i++) {
+                            var checkValue = categoryIdList[i]
+                            for (var j = 0; j < select.options.length; j++) {
+                                if (select.options[j].value == checkValue) {
+                                    select.options[j].selected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        $('#id_eidt_category').select2({
+                            placeholder: "选择类别",
+                        });
+                        $('.select2-container').width('100%');
+                    }
+                }
+            });
+        });
+    };
+
+    return {
+        // public functions
+        init: function () {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function () {
+    KTDatatableRecordSelectionDemo.init();
+    $('#id_category').select2({
+        placeholder: "选择类别",
+    });
+    $('#id_eidt_category').select2({
+        placeholder: "选择类别",
+    });
+    $('.select2-container').width('100%');
+});
+
+
+var EditALIConfig = function () {
+    var category_list = $("#id_eidt_category").val()
+    var category_string = ''
+    for (var i = 0; i < category_list.length; i++) {
+        category_string = category_string + category_list[i] + ','
+    }
+    $.ajax({
+        type: "POST",
+        url: $("#edit_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            nickname: document.getElementById("id_edit_nick_name").value,
+            pid: document.getElementById("id_edit_pid").value,
+            remark: document.getElementById("id_edit_remark").value,
+            category: category_string,
+            id: document.getElementById("id_data_id").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                window.location.href = response;
+            }
+        }
+    })
+}
+
+var initeditmodal = function () {
+    document.getElementById("id_edit_nick_name").value = '';
+    document.getElementById("id_edit_pid").value = '';
+    document.getElementById("id_edit_remark").value = '';
+    document.getElementById("id_data_id").value = '';
+    var select = document.getElementById('id_eidt_category');
+    for (var j = 0; j < select.options.length; j++) {
+        select.options[j].selected = false;
+    }
+}
+
+var initcreatemodal = function () {
+    document.getElementById("id_nick_name").value = '';
+    document.getElementById("id_pid").value = '';
+    document.getElementById("id_remark").value = '';
+    var select = document.getElementById('id_category');
+    for (var j = 0; j < select.options.length; j++) {
+        select.options[j].selected = false;
+    }
+}
+
+$('#createModal').on('hidden.bs.modal', function () {
+    window.location.reload();
+});
+
+$('#editModal').on('hidden.bs.modal', function () {
+    window.location.reload();
+});
+
+
+var CreateALIConfig = function () {
+    var category_list = $("#id_category").val()
+    var category_string = ''
+    for (var i = 0; i < category_list.length; i++) {
+        category_string = category_string + category_list[i] + ','
+    }
+    $.ajax({
+        type: "POST",
+        url: $("#create_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            nickname: document.getElementById("id_nick_name").value,
+            pid: document.getElementById("id_pid").value,
+            remark: document.getElementById("id_remark").value,
+            category: category_string,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                window.location.href = response;
+            }
+        }
+    })
+}

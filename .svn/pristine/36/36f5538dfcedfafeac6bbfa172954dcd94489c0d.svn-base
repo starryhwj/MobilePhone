@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 我的视频{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}我的视频{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

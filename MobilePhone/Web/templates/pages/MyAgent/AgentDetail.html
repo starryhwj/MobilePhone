@@ -1,0 +1,218 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 代理账号信息{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    代理账号信息
+                </h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-form__group kt-form__group--inline">
+                                    <div class="kt-form__label">
+                                        <label style="width: 30px;">列名</label>
+                                    </div>
+                                    <div class="kt-form__control">
+                                        <select class="form-control bootstrap-select" id="agentdetail_column">
+                                            <option value="-1">请选择</option>
+                                            <option value="username">账号</option>
+                                            <option value="truename">姓名</option>
+                                            <option value="phone">手机</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入..."
+                                        id="generalAgentDetailSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_agent_detail"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade bd-example-modal-lg" id="editModal" tabindex="-1" role="dialog"
+                aria-labelledby="editModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editModalLabel">代理账号详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-login-v1__form kt-form" autocomplete="off" method="post"
+                            enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>账号</label>
+                                        <input type='text' class="form-control" id="id_edit_username"
+                                            name="edit_username" disabled>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>加入日期</label>
+                                        <input type='text' class="form-control" id="id_date_joined" name="date_joined"
+                                            disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>姓名</label>
+                                        <input type='text' class="form-control" id="id_edit_true_name"
+                                            name="edit_true_name">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>手机号码</label>
+                                        <input type='text' class="form-control" id="id_edit_phone" name="edit_phone">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>微信号</label>
+                                        <input type='text' class="form-control" id="id_edit_wechat" name="edit_wechat">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>微信昵称</label>
+                                        <input type='text' class="form-control" id="id_edit_wechat_nickname"
+                                            name="edit_wechat_nickname">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>性别:</label>
+                                        <div class="kt-radio-inline" id='id_edit_sex'>
+                                            <label class="kt-radio kt-radio--brand">
+                                                <input type="radio" id='id_edit_sex_male' name="edit_sex" value='0'> 男
+                                                <span></span>
+                                            </label>
+                                            <label class="kt-radio kt-radio--brand">
+                                                <input type="radio" id='id_edit_sex_female' name="edit_sex" value='1'> 女
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>平台</label>
+                                        <input type='text' class="form-control" id="id_edit_platform"
+                                            name="edit_platform">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>平台账号</label>
+                                        <input type='text' class="form-control" id="id_edit_platform_id"
+                                            name="edit_platform_id">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>平台密码</label>
+                                        <input type='text' class="form-control" id="id_edit_platform_password"
+                                            name="edit_platform_password">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>是否实名认证:</label>
+                                    <div class="kt-radio-inline" id='id_edit_platform_is_certification'>
+                                        <label class="kt-radio kt-radio--brand">
+                                            <input type="radio" id='id_edit_platform_is_certification_no'
+                                                name="edit_platform_is_certification" value="0"> 否
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-radio kt-radio--brand">
+                                            <input type="radio" id='id_edit_platform_is_certification_yes'
+                                                name="edit_platform_is_certification" value="1"> 是
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>实名认证姓名</label>
+                                        <input type='text' class="form-control"
+                                            id="id_edit_platform_certification_true_name"
+                                            name="edit_platform_certification_true_name">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>实名认证身份证</label>
+                                        <input type='text' class="form-control"
+                                            id="id_edit_wechat_platform_certification_id_card"
+                                            name="edit_wechat_platform_certification_id_card">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>QQ</label>
+                                        <input type='text' class="form-control" id="id_edit_qq" name="edit_qq">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>出生日期</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly id="id_edit_birthday"
+                                                name='edit_birthday' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_edit_data_id" name="edit_data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand" onclick="EditAgent()">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'js/bootstrap-datepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datepicker.zh-CN.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/MyAgent/AgentDetail.js' %}" type="text/javascript"></script>
+{% endblock js %}

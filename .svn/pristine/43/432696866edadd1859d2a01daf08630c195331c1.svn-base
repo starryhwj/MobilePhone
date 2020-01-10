@@ -1,0 +1,429 @@
+"use strict";
+// Class definition
+
+var KTDatatableDevice = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        search: {
+            input: $('#generalDeviceSearch'),
+            onEnter: true,
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: '设备ID',
+            sortable: true,
+            width: 50,
+        }, {
+            field: 'Enable',
+            title: '设备状态',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '启用',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '停用',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Enable].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Enable].title +
+                    '</span>';
+            },
+        }, {
+            field: 'IsOnline',
+            title: '在线信息',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '在线',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '离线',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.IsOnline].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.IsOnline].title +
+                    '</span>';
+            },
+        }, {
+            field: 'tag',
+            title: '标签',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var cat = row.tag
+                var cat_list = cat.split(',')
+                if (cat_list != null && cat_list.length > 0) {
+                    var html_string = ''
+                    for (var i = 0; i < cat_list.length; i++) {
+                        var per = cat_list[i]
+                        html_string = html_string + ' ' +
+                            '<span class="badge badge-primary">' + per +
+                            '</span>';
+                    }
+                    return html_string
+                } else {
+                    return ''
+                };
+            }
+        }, {
+            field: 'TikTokAccount__Group__Name',
+            title: '分组',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.TikTokAccount__Group__Name == null) {
+                    return ''
+                } else {
+                    return '\
+                    <span class="badge badge-primary">' + row.TikTokAccount__Group__Name + '</span>';
+                }
+            }
+        },{
+            field: 'Remark',
+            title: '备注',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.Remark == null) {
+                    return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="修改" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-pen"></i>\
+                    </button>\
+                ';
+                } else {
+                    return '\
+                    <span>' + row.Remark + '</span>\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="修改" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-pen"></i>\
+                    </button>\
+                ';
+                }
+            },
+        }, {
+            field: 'Agent__Subscriber__username',
+            title: '代理名称',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.Agent__Subscriber__username == null) {
+                    return ''
+                } else {
+                    return '\
+                    <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                    data-subcriber-name=' + row.Agent__Subscriber__username + '>' + row.Agent__Subscriber__username + '</a> \
+                    '
+                }
+            }
+        }, {
+            field: 'TikTokAccount__NickName',
+            title: '抖音昵称',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.TikTokAccount__NickName == null) {
+                    return ''
+                } else {
+                    return '\
+                    <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                    data-tiktokaccount-name=' + row.TikTokAccount__NickName + '>' + row.TikTokAccount__NickName + '</a> \
+                    '
+                }
+            }
+        }, ],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+        $('#kt_device_column').on('change', function () {
+            datatable.search($(this).val().toLowerCase(), 'devicecolumn');
+        });
+
+        $('#kt_device_column').selectpicker();
+
+        var datatable = $('#datatable_device').KTDatatable(options);
+
+        datatable.on('click', '[data-edit-id]', function () {
+            var id = $(this).data('edit-id');
+            initeditmodal();
+            $.ajax({
+                type: "POST",
+                url: $("#getdeviceremark_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#editRemarkModal').modal('show');
+                        document.getElementById("id_edit_remark").value = response['remark'];
+                        document.getElementById("id_edit_data_id").value = response['dataid'];
+                    }
+                }
+            });
+        });
+
+        datatable.on('click', '[data-subcriber-name]', function () {
+            var name = $(this).data('subcriber-name');
+            localStorage.setItem('jumpToAgentName', name);
+            window.location.href = $("#agentdetail_url").text()
+        });
+
+        datatable.on('click', '[data-tiktokaccount-name]', function () {
+            var name = $(this).data('tiktokaccount-name');
+            localStorage.setItem('jumpToTikTokAccounttName', name);
+            window.location.href = $("#acountlist_url").text()
+        });
+    };
+
+    return {
+        // public functions
+        init: function () {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function () {
+    KTDatatableDevice.init();
+    if (localStorage.getItem("jumpToMobilePhone") != null) {
+        var mobileid = localStorage.getItem("jumpToMobilePhone")
+        localStorage.removeItem('jumpToMobilePhone');
+        $('#generalDeviceSearch').val(mobileid);
+        var selectcolumn = $('#kt_device_column');
+        for (var j = 0; j < selectcolumn[0].options.length; j++) {
+            if (selectcolumn[0].options[j].value == 'id') {
+                selectcolumn[0].options[j].selected = true;
+                break;
+            }
+        }
+        selectcolumn.next()[0].title = '设备ID'
+        selectcolumn.next().children().children().children()[0].innerHTML = '设备ID'
+        var datatable = $('#datatable_device').KTDatatable()
+        datatable.setDataSourceParam('query', {
+            'generalDeviceSearch': mobileid,
+            'devicecolumn': 'id'
+        })
+        datatable.load()
+    }
+    initSearch();
+});
+
+var initSearch = function () {
+    //状态
+    $("[name='statusBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $("[name='statusBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            getStatusSearch()
+        }
+    })
+    //是否在线
+    $("[name='isonlineBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $("[name='isonlineBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            getIsonlineSearch()
+        }
+    })
+    //标签
+    $("[name='tagBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            var count = $("[name='tagBtn']").length
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='tagBtnAll']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            if ($("#tag .btn-primary").length == count) {
+                $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            }
+            getTagSearch()
+        } else if ($(this).hasClass('btn-primary')) {
+            $(this).removeClass('btn-primary')
+            $(this).addClass('btn-outline-hover-primary')
+            if ($("#tag .btn-primary").length == 0) {
+                $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+            }
+            getTagSearch()
+        }
+    })
+    $("[name='tagBtnAll']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            getTagSearch()
+        }
+    })
+    //分组
+    $("[name='groupBtn']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            var count = $("[name='groupBtn']").length
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='groupBtnAll']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            if ($("#group .btn-primary").length == count) {
+                $("[name='groupBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                $("[name='groupBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            }
+            getGroupSearch()
+        } else if ($(this).hasClass('btn-primary')) {
+            $(this).removeClass('btn-primary')
+            $(this).addClass('btn-outline-hover-primary')
+            if ($("#group .btn-primary").length == 0) {
+                $("[name='groupBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+            }
+            getGroupSearch()
+        }
+    })
+    $("[name='groupBtnAll']").click(function () {
+        if ($(this).hasClass('btn-outline-hover-primary')) {
+            $(this).removeClass('btn-outline-hover-primary')
+            $(this).addClass('btn-primary')
+            $("[name='groupBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+            getGroupSearch()
+        }
+    })
+}
+
+
+var EditRemark = function () {
+    $.ajax({
+        type: "POST",
+        url: $("#editdeviceremark_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            remark: document.getElementById("id_edit_remark").value,
+            id: document.getElementById("id_edit_data_id").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                var datatable = $('#datatable_device').KTDatatable();
+                $('#editRemarkModal').modal('hide');
+                datatable.load()
+            }
+        }
+    })
+}
+
+var initeditmodal = function () {
+    document.getElementById("id_edit_remark").value = '';
+    document.getElementById("id_edit_data_id").value = '';
+}
+
+var getStatusSearch = function () {
+    var statusSearch = $("#status .btn-primary")[0].value
+    search('device_status', statusSearch)
+}
+
+var getIsonlineSearch = function () {
+    var isonlineSearch = $("#isonline .btn-primary")[0].value
+    search('isonline', isonlineSearch)
+}
+
+var getTagSearch = function () {
+    var tagSearch = ''
+    if ($("[name='tagBtnAll']").hasClass('btn-primary')) {
+        tagSearch = ''
+    } else {
+        var list = $("#tag .btn-primary")
+        for (var i = 0; i < list.length; i++) {
+            var per = list[i]
+            tagSearch = tagSearch + per.value + ','
+        }
+    }
+    search('tag', tagSearch)
+}
+
+var getGroupSearch = function () {
+    var groupSearch = ''
+    if ($("[name='groupBtnAll']").hasClass('btn-primary')) {
+        groupSearch = ''
+    } else {
+        var list = $("#group .btn-primary")
+        for (var i = 0; i < list.length; i++) {
+            var per = list[i]
+            groupSearch = groupSearch + per.value + ','
+        }
+    }
+    search('group', groupSearch)
+}
+
+var search = function (param, value) {
+    var datatable = $('#datatable_device').KTDatatable()
+    var cur_query = datatable.getDataSourceParam('query')
+    if (cur_query == null) {
+        cur_query = {}
+        cur_query[param] = value
+    } else {
+        cur_query[param] = value
+    }
+    datatable.setDataSourceParam('query', cur_query)
+    datatable.load()
+}

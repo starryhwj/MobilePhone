@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+
+class User(AbstractUser):
+    phone = models.CharField(verbose_name='电话', max_length=128, null=True, blank=True)
+    head_pic = models.ImageField(verbose_name='头像', upload_to='images/Users/%Y/%m/%d/', null=True, blank=True)
+    is_pay = models.BooleanField(verbose_name='是否是付费用户', null=False, default=False)
+    pay_begin_date = models.DateTimeField(verbose_name='付费起始日期', null=True, blank=True)
+    pay_end_date = models.DateTimeField(verbose_name='付费结束日期', null=True, blank=True)
+

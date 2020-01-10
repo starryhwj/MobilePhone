@@ -1,0 +1,147 @@
+"use strict";
+// Class definition
+
+var KTDatatableAccountList = function() {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                          first: '首页',
+                          prev: '前一页',
+                          next: '下一页',
+                          last: '尾页',
+                          more: '更多',
+                          input: '请输入页码',
+                          select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        search: {
+		    input: $('#generalAccountSearch'),
+		    onEnter: true,
+	    },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: '#',
+            sortable: false,
+            width: 20,
+        },  {
+            field: 'UserID',
+            title: '抖音UID',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'NickName',
+            title: '昵称',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'TikTokID',
+            title: '抖音号',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Describe',
+            title: '描述',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Attention',
+            title: '关注',
+            autoHide: false,
+        },{
+            field: 'Fans',
+            title: '粉丝',
+            autoHide: false,
+        },{
+            field: 'Praise',
+            title: '赞',
+            autoHide: false,
+        },{
+            field: 'Video',
+            title: '作品数',
+            autoHide: false,
+        },{
+            field: 'NumOfPraiseToOther',
+            title: '喜欢',
+            autoHide: false,
+        },{
+            field: 'UpdateTime',
+            title: '更新日期',
+            autoHide: false,
+            type: 'date',
+            format: 'MM/DD/YYYY',
+        },
+      ],
+    };
+
+    // basic demo
+    var localSelectorDemo = function() {
+
+        var datatable = $('#datatable_account_list').KTDatatable(options);
+
+    };
+
+    return {
+        // public functions
+        init: function() {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+    KTDatatableAccountList.init();
+    if (localStorage.getItem("jumpToTikTokAccounttName") != null) {
+        var tiktokName = localStorage.getItem("jumpToTikTokAccounttName")
+        localStorage.removeItem('jumpToTikTokAccounttName');
+        $('#generalAccountSearch').val(tiktokName);
+        var datatable = $('#datatable_account_list').KTDatatable()
+        datatable.setDataSourceParam('query', {'generalAccountSearch': tiktokName})
+        datatable.load()
+    }
+});

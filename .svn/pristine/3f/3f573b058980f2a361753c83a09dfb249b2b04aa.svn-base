@@ -1,0 +1,318 @@
+# -*- coding: utf-8 -*-
+from django.db import models
+from Users.models import User
+from .my_enum import *
+
+
+class TikTokAccount(models.Model):
+    UserID = models.TextField(verbose_name='抖音UID', max_length=150, null=True)
+    NickName = models.TextField(verbose_name='昵称', max_length=150, null=True)
+    TikTokID = models.TextField(verbose_name='抖音号', max_length=150, null=True)
+    Describe = models.TextField(verbose_name='描述', max_length=150, null=True)
+    Attention = models.IntegerField(verbose_name='关注', null=False, default=0)
+    Fans = models.IntegerField(verbose_name='粉丝', null=False, default=0)
+    Praise = models.IntegerField(verbose_name='赞', null=False, default=0)
+    Video = models.IntegerField(verbose_name='作品数', null=False, default=0)
+    NumOfPraiseToOther = models.IntegerField(
+        verbose_name='喜欢', null=False, default=0)
+    ShareURL = models.TextField(verbose_name='短链接', max_length=150, null=True)
+    ShowWindowExists = models.BooleanField(
+        verbose_name='窗口是否显示', null=False, default=False)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', null=True)
+    TaoBao_PID = models.TextField(
+        verbose_name='淘宝PID', max_length=150, null=True)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+
+
+class GoodClassification(models.Model):
+    Name = models.TextField(verbose_name='商品分类名', max_length=150, null=False)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+
+
+class Goods(models.Model):
+    Pic1 = models.TextField(verbose_name='图片1', null=True)
+    Pic2 = models.TextField(verbose_name='图片2', null=True)
+    Pic3 = models.TextField(verbose_name='图片3', null=True)
+    Pic4 = models.TextField(verbose_name='图片4', null=True)
+    Pic5 = models.TextField(verbose_name='图片5', null=True)
+    Title = models.TextField(verbose_name='标题', max_length=150, null=False)
+    OutSidePlatformID = models.TextField(
+        verbose_name='外部ID', max_length=150, null=False)
+    Price = models.DecimalField(
+        verbose_name='售价', max_digits=18, decimal_places=2, null=False, default=0)
+    Sales = models.IntegerField(verbose_name='销量', null=False, default=0)
+    CommissionPercent = models.DecimalField(
+        verbose_name='佣金比例', max_digits=18, decimal_places=2, default=0)
+    OutSidePlatformURL = models.TextField(
+        verbose_name='外部URL', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    GoodClassifications = models.ManyToManyField(GoodClassification)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+    PIDURL = models.TextField(
+        verbose_name='推广URL', max_length=500, null=True)
+    CouponURL = models.TextField(
+        verbose_name='优惠券URL', max_length=500, null=True)
+
+    def GetCategoryString(self):
+        if self.GoodClassifications.all().count() > 0:
+            CategoryList = self.GoodClassifications.all().values()
+            CategoryString = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryString = CategoryString + Category["Name"] + ','
+            return CategoryString[:-1]
+        else:
+            return ''
+
+    def GetCategoryId(self):
+        if self.GoodClassifications.all().count() > 0:
+            CategoryList = self.GoodClassifications.all().values()
+            CategoryId = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryId = CategoryId + str(Category["id"]) + ','
+            return CategoryId[:-1]
+        else:
+            return ''
+
+
+class VideoClassification(models.Model):
+    Name = models.TextField(verbose_name='视频分类名', max_length=150, null=False)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+
+
+class Videos(models.Model):
+    Title = models.TextField(verbose_name='标题', max_length=150, null=True)
+    URL = models.FileField(verbose_name='视频文件',
+                           upload_to='videos/%Y/%m/%d/', null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    Remark = models.TextField(verbose_name='备注', max_length=150, null=True)
+    VideoClassifications = models.ManyToManyField(VideoClassification)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+    Goods = models.ForeignKey(Goods, verbose_name='商品',
+                              on_delete=models.SET_NULL, null=True)
+
+    def GetCategoryString(self):
+        if self.VideoClassifications.all().count() > 0:
+            CategoryList = self.VideoClassifications.all().values()
+            CategoryString = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryString = CategoryString + Category["Name"] + ','
+            return CategoryString[:-1]
+        else:
+            return ''
+
+    def GetCategoryId(self):
+        if self.VideoClassifications.all().count() > 0:
+            CategoryList = self.VideoClassifications.all().values()
+            CategoryId = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryId = CategoryId + str(Category["id"]) + ','
+            return CategoryId[:-1]
+        else:
+            return ''
+
+    def GetCommodityName(self):
+        if self.Goods is not None:
+            return self.Goods.Title
+        else:
+            return ''
+
+    def GetCommodityId(self):
+        if self.Goods is not None:
+            return self.Goods.id
+        else:
+            return ''
+
+
+class Works(models.Model):
+    TikTokAccount = models.ForeignKey(
+        TikTokAccount, verbose_name='作者', on_delete=models.CASCADE)
+    ShareURL = models.TextField(verbose_name='短链接', max_length=150, null=True)
+    VideoID = models.TextField(verbose_name='视频ID', max_length=150, null=True)
+    NumOfPraiseGet = models.IntegerField(
+        verbose_name='喜欢', null=False, default=0)
+    NumOfComments = models.IntegerField(
+        verbose_name='评论', null=False, default=0)
+    NumOfShare = models.IntegerField(verbose_name='分享', null=False, default=0)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', null=True)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+
+
+class MobilePhone(models.Model):
+    IMEI = models.TextField(verbose_name='IMEI码', max_length=150, null=False)
+    TikTokAccount = models.ForeignKey(
+        TikTokAccount, verbose_name='抖音账号', on_delete=models.SET_NULL, null=True)
+    SysID = models.CharField(verbose_name='GUID', max_length=64, null=False)
+    Enable = models.BooleanField(
+        verbose_name='是否可用', null=False, default=False)
+    StatusInfo = models.TextField(
+        verbose_name='状态信息', max_length=150, null=True)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.CASCADE, null=True)
+
+
+class VideoMission(models.Model):
+    MobilePhone = models.ForeignKey(
+        MobilePhone, verbose_name='手机ID', on_delete=models.CASCADE, null=True)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=TaskStatus, default=0)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    VideoURL = models.TextField(verbose_name='视频地址', max_length=150, null=True)
+    VideoTitle = models.TextField(
+        verbose_name='视频标题', max_length=150, null=True)
+    VideoKeyword = models.TextField(
+        verbose_name='视频话题', max_length=150, null=True)
+    GoodURL = models.TextField(verbose_name='商品地址', max_length=500, null=True)
+    GoodTitle = models.TextField(
+        verbose_name='商品标题', max_length=150, null=True)
+    GoodCategory = models.TextField(
+        verbose_name='商品类别', max_length=150, null=True)
+    Video = models.ForeignKey(
+        Videos, verbose_name='关联视频ID', on_delete=models.SET_NULL, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', auto_now=True)
+
+
+class MutualBrushMission(models.Model):
+    MobilePhone = models.ForeignKey(
+        MobilePhone, verbose_name='手机ID', on_delete=models.CASCADE, null=True)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=TaskStatus, default=0)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    VideoURL = models.TextField(verbose_name='视频地址', max_length=150, null=True)
+    IsLike = models.BooleanField(
+        verbose_name='是否点赞', null=False, default=False)
+    CommentText = models.TextField(
+        verbose_name='评论内容', max_length=150, null=True)
+    Title = models.TextField(verbose_name='标题', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', auto_now=True)
+
+
+class CommentLibrary(models.Model):
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    Text = models.TextField(verbose_name='评论内容', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+
+
+class MaintenanceNumberMission(models.Model):
+    MobilePhone = models.ForeignKey(
+        MobilePhone, verbose_name='手机ID', on_delete=models.CASCADE, null=True)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=TaskStatus, default=0)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    TikTokID = models.TextField(verbose_name='抖音号', max_length=150, null=True)
+    During = models.IntegerField(verbose_name='持续时间', null=False, default=0)
+    VideoClassifications = models.ManyToManyField(VideoClassification)
+    Title = models.TextField(verbose_name='标题', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', auto_now=True)
+
+    def GetCategoryString(self):
+        if self.VideoClassifications.all().count() > 0:
+            CategoryList = self.VideoClassifications.all().values()
+            CategoryString = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryString = CategoryString + Category["Name"] + ','
+            return CategoryString[:-1]
+        else:
+            return ''
+
+    def GetCategoryId(self):
+        if self.VideoClassifications.all().count() > 0:
+            CategoryList = self.VideoClassifications.all().values()
+            CategoryId = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryId = CategoryId + str(Category["id"]) + ','
+            return CategoryId[:-1]
+        else:
+            return ''
+
+
+class ScanMission(models.Model):
+    MobilePhone = models.ForeignKey(
+        MobilePhone, verbose_name='手机ID', on_delete=models.CASCADE, null=True)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=TaskStatus, default=0)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    VideoURL = models.TextField(verbose_name='视频地址', max_length=500, null=True)
+    PeopleLimit = models.IntegerField(
+        verbose_name='刷粉人数上限', null=False, default=0)
+    TimeLimit = models.IntegerField(
+        verbose_name='刷粉时间上限', null=False, default=0)
+    Interval = models.IntegerField(verbose_name='间隔', null=False, default=0)
+    Title = models.TextField(verbose_name='标题', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', auto_now=True)
+
+
+class FollowMission(models.Model):
+    MobilePhone = models.ForeignKey(
+        MobilePhone, verbose_name='手机ID', on_delete=models.CASCADE, null=True)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=TaskStatus, default=0)
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    TikTokID = models.TextField(verbose_name='抖音号', max_length=150, null=True)
+    PeopleLimit = models.IntegerField(
+        verbose_name='刷粉人数上限', null=False, default=0)
+    TimeLimit = models.IntegerField(
+        verbose_name='刷粉时间上限', null=False, default=0)
+    Interval = models.IntegerField(verbose_name='间隔', null=False, default=0)
+    Title = models.TextField(verbose_name='标题', max_length=150, null=True)
+    CreateTime = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
+    UpdateTime = models.DateTimeField(verbose_name='更新日期', auto_now=True)
+
+
+class ALIConfig(models.Model):
+    NickName = models.TextField(verbose_name='昵称', max_length=150, null=True)
+    PID = models.TextField(
+        verbose_name='PID', max_length=150, null=False, default='')
+    Owner = models.ForeignKey(User, verbose_name='拥有者',
+                              on_delete=models.SET_NULL, null=True)
+    Remark = models.TextField(verbose_name='备注', max_length=150, null=True)
+    IsDefault = models.BooleanField(
+        verbose_name='是否默认', null=False, default=False)
+    Status = models.IntegerField(
+        verbose_name='状态', null=False, choices=ALIStatus, default=0)
+    Category = models.ManyToManyField(GoodClassification)
+    LASTPID = models.TextField(
+        verbose_name='LASTPID', max_length=150, null=False, default='')
+
+    def GetCategoryString(self):
+        if self.Category.all().count() > 0:
+            CategoryList = self.Category.all().values()
+            CategoryString = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryString = CategoryString + Category["Name"] + ','
+            return CategoryString[:-1]
+        else:
+            return ''
+
+    def GetCategoryId(self):
+        if self.Category.all().count() > 0:
+            CategoryList = self.Category.all().values()
+            CategoryId = ''
+            for i in range(len(CategoryList)):
+                Category = CategoryList[i]
+                CategoryId = CategoryId + str(Category["id"]) + ','
+            return CategoryId[:-1]
+        else:
+            return ''

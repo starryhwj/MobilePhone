@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 计划分配{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}计划分配{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

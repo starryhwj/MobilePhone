@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+# -*- filename: Users/views.py
+
+from __future__ import unicode_literals
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.urls import reverse
+from django.contrib.auth import login, logout, authenticate
+from .form import CustomUserCreationForm
+import json
+
+
+def login_view(request):
+    if request.method != 'POST':
+        return render(request, 'users/login.html')
+    else:
+        username = request.POST['username']
+        password = request.POST['password']
+        authenticated_user = authenticate(username=username, password=password)
+        if authenticated_user:
+            login(request, authenticated_user)
+            return HttpResponse(reverse('Web:index'))
+        else:
+            return HttpResponse('False')
+
+
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect(reverse('Users:login'))
+
+
+def register(request):
+    if request.method != 'POST':
+        form = CustomUserCreationForm()
+        context = {'form': form}
+        return render(request, 'users/register.html', context)
+    else:
+        ret = {"status": "NG", "msg": None}
+        form = CustomUserCreationForm(data=request.POST)
+        if form.is_valid():
+            new_user = form.save()
+            authenticated_user = authenticate(username=new_user.username, password=request.POST['password1'])
+            login(request, authenticated_user)
+            ret["status"] = "OK"
+            ret["msg"] = reverse('Web:index')
+        else:
+            ret["msg"] = form.errors
+        return HttpResponse(json.dumps(ret, ensure_ascii=False), content_type="application/json,charset=utf-8")
+

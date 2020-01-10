@@ -1,0 +1,333 @@
+"use strict";
+// Class definition
+
+var old_devide_id = ''
+
+var KTDatatableRecordSelectionDemo = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        rows: {
+            autoHide: false,
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            autoHide: false,
+            sortable: false,
+        },  {
+            field: 'Subscriber__username',
+            title: '账号',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__date_joined',
+            title: '加入日期',
+            type: 'date',
+            format: 'MM/DD/YYYY',
+        }, {
+            field: 'Subscriber__true_name',
+            title: '姓名',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__phone',
+            title: '手机',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__wechat',
+            title: '微信号',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__wechat_nickname',
+            title: '微信昵称',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__sex',
+            title: '性别',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    '0': {
+                        'title': '男',
+                        'class': 'kt-badge--success'
+                    },
+                    '1': {
+                        'title': '女',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Subscriber__sex].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Subscriber__sex].title +
+                    '</span>';
+            },
+        }, {
+            field: 'Subscriber__platform',
+            title: '平台',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__platform_id',
+            title: '平台账号',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__platform_password',
+            title: '平台密码',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__platform_is_certification',
+            title: '是否实名验证',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    '0': {
+                        'title': '否',
+                        'class': 'kt-badge--danger'
+                    },
+                    '1': {
+                        'title': '是',
+                        'class': ' kt-badge--success'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Subscriber__platform_is_certification].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Subscriber__platform_is_certification].title +
+                    '</span>';
+            },
+        },{
+            field: 'Subscriber__platform_certification_true_name',
+            title: '实名验证姓名',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__platform_certification_id_card',
+            title: '实名验证身份证',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__qq',
+            title: 'QQ',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'Subscriber__birthday',
+            title: '出生日期',
+            type: 'date',
+            format: 'YYYY-MM-DD',
+        }, {
+            field: 'Actions',
+            title: '操作',
+            sortable: false,
+            width: 110,
+            overflow: 'visible',
+	        autoHide: false,
+	        textAlign: 'center',
+            template: function(row) {
+                return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="编辑" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-file"></i>\
+                    </button>\
+                ';
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+
+        options.search = {
+            input: $('#generalAgentDetailSearch'),
+            onEnter: true,
+        };
+
+        $('#id_edit_birthday').datepicker({
+            todayHighlight: true,
+            autoclose: true,
+            pickerPosition: 'bottom-left',
+            format: 'yyyy-mm-dd',
+            clearBtn: true,
+            todayBtn: true,
+            language: 'zh-CN',
+        });
+
+        var datatable = $('#datatable_agent_detail').KTDatatable(options);
+
+        datatable.on('click', '[data-edit-id]', function () {
+            var id = $(this).data('edit-id');
+            $.ajax({
+                type: "POST",
+                url: $("#get_by_id_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#editModal').modal('show');
+                        document.getElementById("id_edit_username").value = response['username'];
+                        document.getElementById("id_date_joined").value = response['date_joined'];
+                        document.getElementById("id_edit_true_name").value = response['true_name'];
+                        document.getElementById("id_edit_phone").value = response['phone'];
+                        document.getElementById("id_edit_wechat").value = response['wechat'];
+                        document.getElementById("id_edit_wechat_nickname").value = response['wechat_nickname'];
+                        document.getElementById("id_edit_platform").value = response['platform'];
+                        document.getElementById("id_edit_platform_id").value = response['platform_id'];
+                        document.getElementById("id_edit_platform_password").value = response['platform_password'];
+                        document.getElementById("id_edit_platform_certification_true_name").value = response['platform_certification_true_name'];
+                        document.getElementById("id_edit_wechat_platform_certification_id_card").value = response['platform_certification_id_card'];
+                        document.getElementById("id_edit_qq").value = response['qq'];
+                        document.getElementById("id_edit_data_id").value = response['dataid'];
+                        $("#id_edit_birthday").datepicker("update", response['birthday'])
+                        var sex =  response['sex'];
+                        if (sex == '0') {
+                            $('#id_edit_sex_male').selected()
+                        } else {
+                            $('#id_edit_sex_female').selected()
+                        }
+                        var platform_is_certification =  response['platform_is_certification'];
+                        if (platform_is_certification == '0') {
+                            $('#id_edit_platform_is_certification_no').selected()
+                            $("#id_edit_platform_certification_true_name").attr("disabled","disabled");
+                            $("#id_edit_wechat_platform_certification_id_card").attr("disabled","disabled");
+                        } else {
+                            $('#id_edit_platform_is_certification_yes').selected()
+                        }
+                    }
+                }
+            });
+        });
+    };
+
+    return {
+        // public functions
+        init: function (agentName) {
+            localSelectorDemo(agentName);
+        }
+    };
+}();
+
+
+jQuery(document).ready(function () {
+    KTDatatableRecordSelectionDemo.init()
+    if (localStorage.getItem("jumpToAgentName") != null) {
+        var agentName = localStorage.getItem("jumpToAgentName")
+        localStorage.removeItem('jumpToAgentName');
+        $('#generalAgentSearch').val(agentName);
+        var datatable = $('#datatable_agent_list').KTDatatable()
+        datatable.setDataSourceParam('query', {
+            'generalAgentSearch': agentName
+        })
+        datatable.load()
+    }
+})
+
+
+$('#editModal').on('hidden.bs.modal', function () {
+    window.location.reload();
+});
+
+
+var EditAgent = function () {
+    $.ajax({
+        type: "POST",
+        url: $("#edit_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            dataid: document.getElementById("id_edit_data_id").value,
+            true_name: document.getElementById("id_edit_true_name").value,
+            phone: document.getElementById("id_edit_phone").value,
+            wechat: document.getElementById("id_edit_wechat").value,
+            wechat_nickname: document.getElementById("id_edit_wechat_nickname").value,
+            sex: $('input[name="edit_sex"]:checked').val(),
+            platform: document.getElementById("id_edit_platform").value,
+            platform_id: document.getElementById("id_edit_platform_id").value,
+            platform_password: document.getElementById("id_edit_platform_password").value,
+            platform_is_certification: $('input[name="edit_platform_is_certification"]:checked').val(),
+            platform_certification_true_name: document.getElementById("id_edit_platform_certification_true_name").value,
+            platform_certification_id_card: document.getElementById("id_edit_wechat_platform_certification_id_card").value,
+            qq: document.getElementById("id_edit_qq").value,
+            birthday: document.getElementById("id_edit_birthday").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                window.location.href = response;
+            }
+        }
+    })
+}
+
+$('#id_edit_platform_is_certification_no').on('click', function() {
+	$("#id_edit_platform_certification_true_name").attr("disabled","disabled");
+	$("#id_edit_wechat_platform_certification_id_card").attr("disabled","disabled");
+	$("#id_edit_platform_certification_true_name").val('');
+	$("#id_edit_wechat_platform_certification_id_card").val('');
+})
+
+$('#id_edit_platform_is_certification_yes').on('click', function() {
+	$("#id_edit_platform_certification_true_name").removeAttr("disabled");
+	$("#id_edit_wechat_platform_certification_id_card").removeAttr("disabled");
+})

@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 互刷任务{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}互刷任务{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

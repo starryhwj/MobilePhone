@@ -1,0 +1,306 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 刷粉任务{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    刷粉任务
+                </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                    <button class="btn btn-default btn-bold btn-upper btn-font-sm" data-toggle="modal"
+                        data-target="#createmissionModal" onclick="initcreatemodal()">
+                        <i class="flaticon2-add-1"></i>
+                        新建任务
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+
+            <!--begin: Search Form -->
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--all" id="missionstatus">
+                    <label>任务状态:</label> &nbsp &nbsp
+                    <button type="button" name='missionstatusBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                    {% for status in mission_status %}
+                    <button type="button" name='missionstatusBtn' value="{{ status.0 }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ status.1 }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-5 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-form__group kt-form__group--inline">
+                                    <div class="kt-form__label">
+                                        <label style="width: 60px;">创建日期:</label>
+                                    </div>
+                                    <div class="input-daterange input-group" id="kt_datepicker">
+                                        <input type="text" class="form-control kt-input" name="starttime"
+                                            id='id_starttime' placeholder="从" data-col-index="5" autocomplete="off" />
+                                        <div class="input-group-append">
+                                            <span class="input-group-text"><i class="la la-ellipsis-h"></i></span>
+                                        </div>
+                                        <input type="text" class="form-control kt-input" name="endtime" id='id_endtime'
+                                            placeholder="到" data-col-index="5" autocomplete="off" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入设备ID..."
+                                        id="generalScanMissionSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_ScanMission"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade bd-example-modal-lg" id="createmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="createmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createmissionModalLabel">新建刷粉任务</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_create_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>刷粉人数上限(默认{{ config.defaultscanpeoplelimit }}个)</label>
+                                        <input type='text' class="form-control" id="id_create_mission_peoplelimit"
+                                            name="create_mission_peoplelimit">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>点赞与评论间隔人数(默认{{ config.defaultinterval }}个)</label>
+                                        <input type='text' class="form-control" id="id_create_mission_interval"
+                                            name="create_mission_interval">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>粉丝性别:</label>
+                                    <div class="kt-checkbox-inline" id='id_create_fansex'>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_create_fansex_male' name="create_fansex"> 男
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_create_fansex_female' name="create_fansex"> 女
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_create_fansex_none' name="create_fansex"> 无
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>*设备</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_create_mission_divice"
+                                                name="create_mission_divice" disabled>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button"
+                                                    onclick="initDeviceModal()">选择
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务开始时间(默认即时开始)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_create_mission_starttime" name='create_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务结束时间(默认开始时间后一小时)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_create_mission_endtime" name='create_mission_endtime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-form-label">评论(用回车分隔不同的评论)</label>
+                                    <textarea class="form-control" id="id_create_commenttext" rows="3"></textarea>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>关联设备ID</label>
+                                    <input type='text' class="form-control" id="id_create_device_id"
+                                        name="create_device_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="CreateMission()"
+                                    id="id_create_mission" name="create_mission">发布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-lg" id="editmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="editmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editmissionModalLabel">任务详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_edit_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>刷粉人数上限(默认{{ config.defaultscanpeoplelimit }}个)</label>
+                                        <input type='text' class="form-control" id="id_edit_mission_peoplelimit"
+                                            name="edit_mission_peoplelimit">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>点赞与评论间隔人数(默认{{ config.defaultinterval }}个)</label>
+                                        <input type='text' class="form-control" id="id_edit_mission_interval"
+                                            name="edit_mission_interval">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>粉丝性别:</label>
+                                    <div class="kt-checkbox-inline" id='id_edit_fansex'>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_edit_fansex_male' name="edit_fansex"> 男
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_edit_fansex_female' name="edit_fansex"> 女
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-checkbox kt-checkbox--brand">
+                                            <input type="checkbox" id='id_edit_fansex_none' name="edit_fansex"> 无
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>设备</label>
+                                        <input type="text" class="form-control" id="id_edit_mission_divice"
+                                            name="edit_mission_divice" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-form-label">评论(用回车分隔不同的评论)</label>
+                                    <textarea class="form-control" id="id_edit_commenttext" rows="3"></textarea>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务开始时间(默认即时开始)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_edit_mission_starttime" name='edit_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务结束时间(默认开始时间后一小时)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_edit_mission_endtime" name='edit_mission_endtime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_edit_mission_data_id"
+                                        name="edit_mission_data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="EditMission()"
+                                    id="id_edit_mission" name="edit_mission">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diviceModal" class="modal fade" role="dialog" aria-hidden="true">
+
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<script src="{% static 'js/bootstrap-datetimepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datetimepicker.zh-CN.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datepicker.zh-CN.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/MissionManage/ScanMission.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/control/DeviceDatatable.js' %}" type="text/javascript"></script>
+{% endblock js %}

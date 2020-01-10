@@ -1,0 +1,133 @@
+"use strict";
+// Class definition
+
+var KTDatatableDevice = function() {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                          first: '首页',
+                          prev: '前一页',
+                          next: '下一页',
+                          last: '尾页',
+                          more: '更多',
+                          input: '请输入页码',
+                          select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        search: {
+		    input: $('#generalDeviceSearch'),
+		    onEnter: true,
+	    },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: '#',
+            sortable: true,
+            width: 50,
+        },  {
+            field: 'Enable',
+            title: '状态',
+            autoHide: false,
+            sortable: false,
+            template: function(row) {
+                var status = {
+                    'true': {
+                        'title': '启用',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '停用',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Enable].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Enable].title +
+                    '</span>';
+            },
+        }, {
+            field: 'StatusInfo',
+            title: '状态信息',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'TikTokAccount__NickName',
+            title: '抖音昵称',
+            autoHide: false,
+            sortable: false,
+        },{
+            field: 'TikTokAccount__TikTokID',
+            title: '抖音号',
+            autoHide: false,
+            sortable: false,
+        },
+      ],
+    };
+
+    // basic demo
+    var localSelectorDemo = function() {
+        $('#kt_device_status').on('change', function() {
+            datatable.search($(this).val().toLowerCase(), 'device_status');
+        });
+
+        $('#kt_device_status').selectpicker();
+
+        var datatable = $('#datatable_device').KTDatatable(options);
+
+    };
+
+    return {
+        // public functions
+        init: function() {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+    KTDatatableDevice.init();
+});

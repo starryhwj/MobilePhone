@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 阿里妈妈配置{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}阿里妈妈配置{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

@@ -1,0 +1,148 @@
+# -*- coding: utf-8 -*-
+
+from django.urls import path
+from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    # begin 淘宝验证
+    path('root.txt', views.taobaoverify, name='taobaoverify'),
+    # end 淘宝验证
+    # begin 我的商品
+    path('MyCommodity/', views.mycommodity, name='MyCommodity'),
+    path('MyCommodity/GetMyCommodity',
+         views.getmycommodity, name='GetMyCommodity'),
+    path('MyCommodity/DeleteMyCommodity',
+         views.delete_mycommodity_by_ids, name='DeleteMyCommodity'),
+    path('MyCommodity/CreateMyCommodity',
+         views.createmycommodity, name='CreateMyCommodity'),
+    path('MyCommodity/GetTaoBaoCommodity',
+         views.gettaobaocommodity, name='GetTaoBaoCommodity'),
+    path('MyCommodity/GetMyCommodityById',
+         views.getmycommoditybyid, name='GetMyCommodityById'),
+    path('MyCommodity/EditMyCommodity',
+         views.editmycommodity, name='EditMyCommodity'),
+    # end 我的商品
+    # begin 商品类别
+    path('CommodityCategory', views.commoditycategory, name='CommodityCategory'),
+    path('CommodityCategory/GetCommodityCategory',
+         views.getcommoditycategory, name='GetCommodityCategory'),
+    path('CommodityCategory/DeleteCommodityCategory',
+         views.delete_commoditycategory_by_ids, name='DeleteCommodityCategory'),
+    path('CommodityCategory/CreateCommodityCategory',
+         views.createcommoditycategory, name='CreateCommodityCategory'),
+    path('CommodityCategory/GetCommodityCategoryByID',
+         views.getcommoditycategorybyid, name='GetCommodityCategoryByID'),
+    path('CommodityCategory/EditCommodityCategory',
+         views.editcommoditycategory, name='EditCommodityCategory'),
+    # end 商品类别
+    # begin 设备管理
+    path('DeviceManage/', views.devicemanage, name='DeviceManage'),
+    path('DeviceManage/GetDevice', views.getdevice, name='GetDevice'),
+    path('DeviceManage/GetDeviceNameByIDs',
+         views.getdevicenamebyids, name='GetDeviceNameByIDs'),
+    # end 设备管理
+    path('AccountDataAnalysis/', views.accountdataanalysis,
+         name='AccountDataAnalysis'),
+    # begin 账号列表
+    path('AccountList/', views.accountlist, name='AccountList'),
+    path('AccountList/GetAccount', views.getaccount, name='GetAccount'),
+    # end 账号列表
+    # begin 阿里妈妈配置
+    path('ALIConfig/', views.aliconfig, name='ALIConfig'),
+    path('ALIConfig/GetALIConfig', views.getaliconfig, name='GetALIConfig'),
+    path('ALIConfig/DeleteALIConfig',
+         views.delete_aliconfig_by_ids, name='DeleteALIConfig'),
+    path('ALIConfig/CreateALIConfig',
+         views.createaliconfig, name='CreateALIConfig'),
+    path('ALIConfig/GetALIConfigByID',
+         views.getaliconfigbyid, name='GetALIConfigByID'),
+    path('ALIConfig/EditALIConfig', views.editaliconfig, name='EditALIConfig'),
+    # end 阿里妈妈配置
+    path('AlreadySendVideo/', views.alreadysendvideo, name='AlreadySendVideo'),
+    path('CommodityDataAnalysis/', views.commoditydataanalysis,
+         name='CommodityDataAnalysis'),
+    path('CommodityMissionManage/', views.commoditymissionmanage,
+         name='CommodityMissionManage'),
+    path('CommoditySelection/', views.commodityselection,
+         name='CommoditySelection'),
+    # begin 我的视频
+    path('MyVideo/', views.myvideo, name='MyVideo'),
+    path('MyVideo/GetMyVideo', views.getmyvideo, name='GetMyVideo'),
+    path('MyVideo/DeleteMyVideo', views.delete_myvideo_by_ids, name='DeleteMyVideo'),
+    path('MyVideo/CreateMyVideo', views.createmyvideo, name='CreateMyVideo'),
+    path('MyVideo/GetMyVideobyID', views.getmyvideobyid, name='GetMyVideobyID'),
+    path('MyVideo/EditMyVideo', views.editmyvideo, name='EditMyVideo'),
+    path('MyVideo/UploadMyVideo', views.uploadmyvideo, name='UploadMyVideo'),
+    path('MyVideo/GetMyVideoURLByID',
+         views.getmyvideourlbyid, name='GetMyVideoURLByID'),
+    path('MyVideo/CreateVideoMission',
+         views.createvideomission, name='CreateVideoMission'),
+    # end 我的视频
+    path('OrderCollect/', views.ordercollect, name='OrderCollect'),
+    path('VideoDataAnalysis/', views.videodataanalysis, name='VideoDataAnalysis'),
+    # begin 视频标签
+    path('VideoLabel/', views.videolabel, name='VideoLabel'),
+    path('VideoLabel/GetVideoLabel', views.getvideolabel, name='GetVideoLabel'),
+    path('VideoLabel/DeleteCommodityCategory',
+         views.delete_videolabel_by_ids, name='DeleteCommodityCategory'),
+    path('VideoLabel/CreateVideoLabel',
+         views.createvideolabel, name='CreateVideoLabel'),
+    path('VideoLabel/EditVideoLabel', views.editvideolabel, name='EditVideoLabel'),
+    path('VideoLabel/GetVideoLabelByID',
+         views.getvideolabelbyid, name='GetVideoLabelByID'),
+    # end 视频标签
+    # begin 视频任务
+    path('VideoMission/', views.videomission, name='VideoMission'),
+    path('VideoMission/GetVideoMission',
+         views.getvideomission, name='GetVideoMission'),
+    path('VideoMission/DeleteVideoMission',
+         views.delete_videomission_by_ids, name='DeleteVideoMission'),
+    path('VideoMission/EditVideoMission',
+         views.editvideomission, name='EditVideoMission'),
+    path('VideoMission/GetVideoMissionByID',
+         views.getvideomissionbyid, name='GetVideoMissionByID'),
+    # end 视频任务
+    # begin 关注任务
+    path('PublishFollowMission/', views.publishfollowmission,
+         name='PublishFollowMission'),
+    path('PublishFollowMission/GetFollowMission',
+         views.getfollowmission, name='GetFollowMission'),
+    path('PublishFollowMission/DeleteFollowMission',
+         views.delete_followmission_by_ids, name='DeleteFollowMission'),
+    path('PublishFollowMission/CreateFollowMission',
+         views.createfollowmission, name='CreateFollowMission'),
+    path('PublishFollowMission/EditFollowMission',
+         views.editfollowmission, name='EditFollowMission'),
+    path('PublishFollowMission/GetFollowMissionByID',
+         views.getfollowmissionbyid, name='GetFollowMissionByID'),
+    # end 关注任务
+    # begin 养号任务
+    path('PublishMaintenanceNumberMission/', views.publishmaintenancenumbermission,
+         name='PublishMaintenanceNumberMission'),
+    path('PublishMaintenanceNumberMission/GetMaintenanceNumberMission',
+         views.getmaintenancenumbermission, name='GetMaintenanceNumberMission'),
+    path('PublishMaintenanceNumberMission/DeleteMaintenanceNumberMission',
+         views.delete_maintenancenumbermission_by_ids, name='DeleteMaintenanceNumberMission'),
+    path('PublishMaintenanceNumberMission/CreateMaintenanceNumberMission',
+         views.createmaintenancenumbermission, name='CreateMaintenanceNumberMission'),
+    path('PublishMaintenanceNumberMission/EditMaintenanceNumberMission',
+         views.editmaintenancenumbermission, name='EditMaintenanceNumberMission'),
+    path('PublishMaintenanceNumberMission/GetMaintenanceNumberMissionByID',
+         views.getmaintenancenumbermissionbyid, name='GetMaintenanceNumberMissionByID'),
+    # end 养号任务
+    # begin 养号任务关键字
+    path('PublishMaintenanceNumberMission/GetMaintenanceNumberMissionKeyword', views.getmaintenancenumbermissionkeyword,
+         name='GetMaintenanceNumberMissionKeyword'),
+    path('PublishMaintenanceNumberMission/GetMaintenanceNumberMissionKeywordNamesByID', views.getmaintenancenumbermissionkeywordnamesbyid,
+         name='GetMaintenanceNumberMissionKeywordNamesByID'),
+    # end 养号任务关键字
+    path('PublishMutualBrushMission/', views.publishmutualbrushmission,
+         name='PublishMutualBrushMission'),
+    path('PublishScanMission/', views.publishscanmission,
+         name='PublishScanMission'),
+    path('CommentLibrary/', views.commentlibrary, name='CommentLibrary'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

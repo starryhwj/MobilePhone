@@ -1,0 +1,136 @@
+<div class="modal-dialog modal-xl">
+    <div class="modal-content" style="min-height: 590px;">
+        <div class="modal-header">
+            <h5 class="modal-title">
+                我的设备
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!--begin: Search Form -->
+            <div class="kt-portlet__body">
+                <div class="search-section">
+                    <div class="search-section__content search-section__content--border--top" id="owner">
+                        <label>拥有者:</label> &nbsp &nbsp
+                        <button type="button" name='ownerBtn' value="" class="btn btn-primary btn-sm">全部</button>
+                        {% for owner in owners%}
+                        <button type="button" name='ownerBtn' value="{{ owner.id }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ owner.username }}</button>
+                        {% endfor %}
+                    </div>
+                </div>                 
+                <div class="search-section">
+                    <div class="search-section__content search-section__content--border--middle" id="status">
+                        <label>设备状态:</label> &nbsp &nbsp
+                        <button type="button" name='statusBtn' value="" class="btn btn-primary btn-sm">全部</button>
+                        <button type="button" name='statusBtn' value="True"
+                            class="btn btn-outline-hover-primary btn-sm">启用</button>
+                        <button type="button" name='statusBtn' value="False"
+                            class="btn btn-outline-hover-primary btn-sm">停用</button>
+                    </div>
+                </div>
+                <div class="search-section">
+                    <div class="search-section__content search-section__content--border--middle" id="isonline">
+                        <label>在线信息:</label> &nbsp &nbsp
+                        <button type="button" name='isonlineBtn' value="" class="btn btn-primary btn-sm">全部</button>
+                        <button type="button" name='isonlineBtn' value="True"
+                            class="btn btn-outline-hover-primary btn-sm">在线</button>
+                        <button type="button" name='isonlineBtn' value="False"
+                            class="btn btn-outline-hover-primary btn-sm">离线</button>
+                    </div>
+                </div>
+                <div class="search-section">
+                    <div class="search-section__content search-section__content--border--middle" id="tag">
+                        <label>标签:</label> &nbsp &nbsp
+                        <button type="button" name='tagBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                        <button type="button" name='tagBtn' value="-1"
+                            class="btn btn-outline-hover-primary btn-sm">无标签</button>
+                        {% for classification in classifications%}
+                        <button type="button" name='tagBtn' value="{{ classification.Name }}"
+                            class="btn btn-outline-hover-primary btn-sm">{{ classification.Name }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="search-section">
+                    <div class="search-section__content search-section__content--border--bottom" id="group">
+                        <label>分组:</label> &nbsp &nbsp
+                        <button type="button" name='groupBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                        <button type="button" name='groupBtn' value="-1"
+                            class="btn btn-outline-hover-primary btn-sm">无分组</button>
+                        {% for group in groups%}
+                        <button type="button" name='groupBtn' value="{{ group.Name }}"
+                            class="btn btn-outline-hover-primary btn-sm">{{ group.Name }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                    <div class="row align-items-center">
+                        <div class="col-xl-8 order-2 order-xl-1">
+                            <div class="row align-items-center">
+                                <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                    <div class="kt-form__group kt-form__group--inline">
+                                        <div class="kt-form__label">
+                                            <label style="width: 30px;">列名</label>
+                                        </div>
+                                        <div class="kt-form__control">
+                                            <select class="form-control bootstrap-select" id="kt_device_column">
+                                                <option value="-1">请选择</option>
+                                                <option value="remark">备注</option>
+                                                <option value="agent">代理名称</option>
+                                                <option value="tiktok">抖音账号</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                    <div class="kt-input-icon kt-input-icon--left">
+                                        <input type="text" class="form-control" placeholder="请输入.."
+                                            id="generalDeviceSearch">
+                                        <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                            <span><i class="la la-search"></i></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end: Search Form -->
+            </div>
+
+            <!--end: Search Form -->
+            <!--begin: Selected Rows Group Action Form -->
+            <div class="kt-form kt-fork--label-align-right kt-margin-t-20 collapse"
+                id="kt_datatable_device_group_action_form">
+                <div class="row align-items-center">
+                    <div class="col-xl-12">
+                        <div class="kt-form__group kt-form__group--inline">
+                            <div class="kt-form__label kt-form__label-no-wrap">
+                                <label class="kt--font-bold kt--font-danger-">选择了
+                                    <span id="kt_datatable_device_selected_number">0</span> 条数据:</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end: Selected Rows Group Action Form -->
+
+            <!--begin: Datatable -->
+            <div id="modal_datatable_device"></div>
+            <!--end: Datatable -->
+
+            <!--begin: HideData-->            
+            <div class="btn btn-clean kt-hidden" id="device_data_url">{{ device_data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="getdevicenamebyids_url">{{ getdevicenamebyids_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->            
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+            <button type="button" class="btn btn-brand " id="kt_datatable_device_select_all" disabled>选择所选
+            </button>
+        </div>
+    </div>
+</div>

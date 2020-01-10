@@ -1,0 +1,3265 @@
+from django.contrib.auth.decorators import login_required
+from django.core.files.base import ContentFile
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+import copy
+from django.urls import reverse
+from .models import *
+from .json_encode import *
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import top.api
+import re
+from .my_enum import *
+from django.db.models import Q
+import random
+import math
+
+
+location_init = {
+    'IsMyAccountMenu': False,
+    'IsCommodityManageMenu': False,
+    'IsVideoManageMenu': False,
+    'IsMyAgentMenu': False,
+    'IsMissionMenu': False,
+    'IsMLabelMenu': False,
+    'IsMutualBrushMissionSubMenu': False,
+    'IsIndexPage': False,
+    'IsDeviceManagePage': False,
+    'IsAccountDataAnalysisPage': False,
+    'IsAccountListPage': False,
+    'IsALIConfigPage': False,
+    'IsAlreadySendVideoPage': False,
+    'IsCommodityDataAnalysisPage': False,
+    'IsCommodityMissionManagePage': False,
+    'IsCommoditySelectionPage': False,
+    'IsMyCommodityPage': False,
+    'IsMyVideoPage': False,
+    'IsOrderCollectPage': False,
+    'IsPublishCommodityMissionPage': False,
+    'IsVideoDataAnalysisPage': False,
+    'IsVideoLabelPage': False,
+    'IsVideoMissionPage': False,
+    'IsCommodityCategoryPage': False,
+    'IsPublishFollowMissionPage': False,
+    'IsPublishMaintenanceNumberMissionPage': False,
+    'IsPublishMutualBrushMissionPage': False,
+    'IsPublishScanMissionPage': False,
+    'IsCommentLibraryPage': False,
+    'IsAgentVerifyPage': False,
+    'IsAgentListPage': False,
+    'IsMaintenanceNumberMissionKeywordPage': False,
+    'IsMaintenanceNumberMissionKeywordClassificationPage': False,
+    'IsOrderPage': False,
+    'IsCashManagePage': False,
+    'IsAccountGroupPage': False,
+}
+taobao_appKey = '28119282'
+taobao_appSecret = '39e5038c96d0d1135f25783ba0ef6585'
+
+
+# begin 淘宝验证
+def taobaoverify(request):
+    return HttpResponse('f00c25378e73a2bbb92a9a1859fb7f05')
+
+
+# end 淘宝验证
+
+
+# begin 账户总览
+@login_required
+def index(request):
+    agenturl = request.build_absolute_uri(
+        reverse('Users:register')) + '?invite_code=' + request.user.invite_code
+    qrcodeurl = "http://qr.liantu.com/api.php?text=" + agenturl
+    location = copy.deepcopy(location_init)
+    location['IsIndexPage'] = True
+    context = {'location': location,
+               'agenturl': agenturl, "qrcodeurl": qrcodeurl}
+    return render(request, 'pages/index.html', context)
+# end 账户总览
+
+# begin 设备管理
+@login_required
+def devicemanage(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    agentlist_url = request.build_absolute_uri(reverse('Web:AgentList'))
+    acountlist_url = request.build_absolute_uri(reverse('Web:AccountList'))
+    getdeviceremark_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceRemark'))
+    editdeviceremark_url = request.build_absolute_uri(
+        reverse('Web:EditDeviceRemark'))
+    location = copy.deepcopy(location_init)
+    location['IsDeviceManagePage'] = True
+    context = {'location': location, 'data_url': data_url, 'getdeviceremark_url': getdeviceremark_url,
+               'editdeviceremark_url': editdeviceremark_url, 'agentlist_url': agentlist_url,
+               'acountlist_url': acountlist_url}
+    return render(request, 'pages/DeviceManage.html', context)
+
+
+@login_required
+def getdevice(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalDeviceSearch]')
+    devicecolumn = request.POST.get('query[devicecolumn]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[device_status]')
+    isonline = request.POST.get('query[isonline]')
+    isagent = request.POST.get('isagent')
+    agentid = request.POST.get('agentid')
+    isonline_second = 300
+
+    if isagent is not None:
+        my_filter = Q()
+        my_filter = my_filter | Q(Agent=None)
+        data_list = MobilePhone.objects.filter(my_filter)
+    else:
+        data_list = MobilePhone.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        serarch_filter = Q()
+        if devicecolumn == 'remark':
+            serarch_filter = serarch_filter | Q(Remark__contains=generalSearch)
+        elif devicecolumn == 'tiktok':
+            serarch_filter = serarch_filter | Q(
+                TikTokAccount__NickName__contains=generalSearch)
+        elif devicecolumn == 'agent':
+            serarch_filter = serarch_filter | Q(
+                Agent__Subscriber__username__contains=generalSearch)
+        elif devicecolumn == 'id':
+            serarch_filter = serarch_filter | Q(id=generalSearch)
+        else:
+            serarch_filter = serarch_filter | Q(Remark__contains=generalSearch)
+            serarch_filter = serarch_filter | Q(
+                TikTokAccount__NickName__contains=generalSearch)
+            serarch_filter = serarch_filter | Q(
+                Agent__Subscriber__username__contains=generalSearch)
+            if str.isdigit(generalSearch):
+                serarch_filter = serarch_filter | Q(id=generalSearch)
+        data_list = data_list.filter(serarch_filter)
+
+    if status is not None and status != '':
+        data_list = data_list.filter(Enable=status)
+
+    if isonline is not None and isonline != '':
+        starttime = datetime.datetime.now()
+        endtime = starttime - datetime.timedelta(seconds=isonline_second)
+        if (isonline == 'True'):
+            data_list = data_list.filter(HeartBeat__gte=endtime)
+        else:
+            isonline_filter = Q()
+            isonline_filter = isonline_filter | Q(HeartBeat__lt=endtime)
+            isonline_filter = isonline_filter | Q(HeartBeat=None)
+            data_list = data_list.filter(isonline_filter)
+
+    fields_list = MobilePhone._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Enable', 'TikTokAccount__NickName',
+                                                 'TikTokAccount__TikTokID', 'Agent__Subscriber__username',
+                                                 'Remark', 'HeartBeat')
+    data = []
+    for i in range(len(data_result)):
+        heartbeat = data_result[i]['HeartBeat']
+        if heartbeat is None:
+            isonlinestatus = False
+        else:
+            starttime = datetime.datetime.now()
+            isonlinestatus = (
+                (starttime - heartbeat).seconds < isonline_second)
+        data_result[i]['IsOnline'] = isonlinestatus
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def getdevicenamebyids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(id_list) > 0:
+        context = {
+            'ids': ids[:-1],
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def getdeviceremark(request):
+    data_id = request.POST.get('id')
+    mobile = MobilePhone.objects.get(id=data_id)
+    remark = mobile.Remark
+    context = {'dataid': data_id, 'remark': remark}
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def editdeviceremark(request):
+    data_id = request.POST.get('id')
+    remark = request.POST.get('remark')
+    mobile = MobilePhone.objects.get(id=data_id)
+    mobile.Remark = remark
+    mobile.save()
+    return HttpResponse('OK')
+
+
+# end 设备管理
+
+
+@login_required
+def accountdataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsAccountDataAnalysisPage'] = True
+    location['IsMyAccountMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/AccountDataAnalysis.html', context)
+
+# begin 账号分组
+@login_required
+def accountgroup(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetAccountGroup'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateAccountGroup'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteAccountGroup'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetAccountGroupByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditAccountGroup'))
+    location = copy.deepcopy(location_init)
+    location['IsAccountGroupPage'] = True
+    location['IsMyAccountMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'create_url': create_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/AccountGroup.html', context)
+
+
+@login_required
+def getaccountgroup(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = TikTokAccountGroup.objects.all()
+
+    fields_list = TikTokAccountGroup._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_accountgroup_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        TikTokAccountGroup.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:AccountGroup'))
+
+
+@login_required
+def createaccountgroup(request):
+    try:
+        name = request.POST.get('name')
+        tiktokAccountGroup = TikTokAccountGroup()
+        tiktokAccountGroup.Name = name
+        tiktokAccountGroup.save()
+        return HttpResponse(reverse('Web:AccountGroup'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editaccountgroup(request):
+    data_id = request.POST.get('id')
+    name = request.POST.get('name')
+    accountgroup = TikTokAccountGroup.objects.get(id=data_id)
+    accountgroup.Name = name
+    accountgroup.save()
+    return HttpResponse(reverse('Web:AccountGroup'))
+
+
+@login_required
+def getaccountgroupbyid(request):
+    data_id = request.POST.get('id')
+    data = TikTokAccountGroup.objects.get(id=data_id)
+    context = {
+        'name': data.Name,
+        'dataid': data.id,
+    }
+    if data is not None:
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 账号分组
+
+# begin 账号列表
+@login_required
+def accountlist(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetAccount'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetAccountListByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditAccountList'))
+    groups = TikTokAccountGroup.objects.all()
+    classifications = MaintenanceNumberMissionKeywordClassification.objects.all()
+    agentlist_url = request.build_absolute_uri(reverse('Web:AgentList'))
+    devicemanage_url = request.build_absolute_uri(reverse('Web:DeviceManage'))
+    location = copy.deepcopy(location_init)
+    location['IsAccountListPage'] = True
+    location['IsMyAccountMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'get_by_id_url': get_by_id_url,
+               'edit_url': edit_url, 'groups': groups,
+               'classifications': classifications, 'agentlist_url': agentlist_url,
+               'devicemanage_url': devicemanage_url}
+    return render(request, 'pages/AccountList.html', context)
+
+
+@login_required
+def getaccount(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalAccountSearch]')
+    tiktokaccountcolumn = request.POST.get('query[tiktokaccountcolumn]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[tiktokaccount_status]')
+    showwindowexists = request.POST.get('query[showwindowexists]')
+    tag = request.POST.get('query[tag]')
+    group = request.POST.get('query[group]')
+    isonline_second = 300
+
+    data_list = TikTokAccount.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        serarch_filter = Q()
+        if tiktokaccountcolumn == 'nickname':
+            serarch_filter = serarch_filter | Q(
+                NickName__contains=generalSearch)
+        elif tiktokaccountcolumn == 'remark':
+            serarch_filter = serarch_filter | Q(Remark__contains=generalSearch)
+        elif tiktokaccountcolumn == 'mobileid':
+            serarch_filter = serarch_filter | Q(mobilephone__id=generalSearch)
+        elif tiktokaccountcolumn == 'agentname':
+            serarch_filter = serarch_filter | Q(
+                mobilephone__Agent__Subscriber__username__contains=generalSearch)
+        else:
+            serarch_filter = serarch_filter | Q(
+                NickName__contains=generalSearch)
+            serarch_filter = serarch_filter | Q(Remark__contains=generalSearch)
+            serarch_filter = serarch_filter | Q(
+                mobilephone__Agent__Subscriber__username__contains=generalSearch)
+            if str.isdigit(generalSearch):
+                serarch_filter = serarch_filter | Q(
+                    mobilephone__id=generalSearch)
+        data_list = data_list.filter(serarch_filter)
+
+    if status is not None and status != '':
+        starttime = datetime.datetime.now()
+        endtime = starttime - datetime.timedelta(seconds=isonline_second)
+        if (status == 'True'):
+            data_list = data_list.filter(mobilephone__HeartBeat__gte=endtime)
+        else:
+            isonline_filter = Q()
+            isonline_filter = isonline_filter | Q(
+                mobilephone__HeartBeat__lt=endtime)
+            isonline_filter = isonline_filter | Q(mobilephone__HeartBeat=None)
+            data_list = data_list.filter(isonline_filter)
+
+    if showwindowexists is not None and showwindowexists != '':
+        data_list = data_list.filter(ShowWindowExists=showwindowexists)
+
+    if tag is not None and tag != '':
+        tag_filter = Q()
+        if '-1' in tag:
+            tag_filter = tag_filter | Q(Classification=None)
+        tag_list = tag[:-1].split(',')
+        tag_filter = tag_filter | Q(Classification__id__in=tag_list)
+        data_list = data_list.filter(tag_filter)
+
+    if group is not None and group != '':
+        group_filter = Q()
+        if '-1' in group:
+            group_filter = group_filter | Q(Group=None)
+        group_list = group[:-1].split(',')
+        group_filter = group_filter | Q(Group__id__in=group_list)
+        data_list = data_list.filter(group_filter)
+
+    fields_list = TikTokAccount._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'UserID', 'NickName', 'TikTokID', 'Describe',
+                                                 'Attention', 'Fans', 'Praise', 'Video', 'NumOfPraiseToOther',
+                                                 'UpdateTime', 'ShowWindowExists',
+                                                 'Remark', 'IP', 'Area', 'Group__Name', 'mobilephone__Agent__Subscriber__username',
+                                                 'mobilephone__id', 'ShareURL')
+    data = []
+    for i in range(len(data_result)):
+        tiktokaccount_id = data_result[i]['id']
+        tiktokaccount = TikTokAccount.objects.get(id=tiktokaccount_id)
+        Info = '粉丝：' + str(tiktokaccount.Fans) + '  ' + '关注：' + str(tiktokaccount.Attention) + '  ' + '赞：' + \
+            str(tiktokaccount.Praise) + '  ' + '作品数：' + str(tiktokaccount.Video) + \
+            '  ' + '喜欢：' + str(tiktokaccount.NumOfPraiseToOther)
+        data_result[i]['Info'] = Info
+        classification = tiktokaccount.GetClassificationString()
+        data_result[i]['classification'] = classification
+        todayvideocount = tiktokaccount.GetTodayVideoCount()
+        data_result[i]['todayvideocount'] = todayvideocount
+        todaygoodscount = tiktokaccount.GetTodayGoodsCount()
+        data_result[i]['todaygoodscount'] = todaygoodscount
+        isonline = tiktokaccount.GetIsOnline()
+        data_result[i]['IsOnline'] = isonline
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def editaccountlist(request):
+    data_id = request.POST.get('id')
+    groupid = request.POST.get('groupid')
+    remark = request.POST.get('remark')
+    classficationid = request.POST.get('classficationid')
+    classfication_list = []
+    tiktokaccount = TikTokAccount.objects.get(id=data_id)
+    if groupid == '-1':
+        tiktokaccount.Group = None
+    else:
+        group = TikTokAccountGroup.objects.get(id=groupid)
+        tiktokaccount.Group = group
+    tiktokaccount.Remark = remark
+    if tiktokaccount.Classification is not None:
+        tiktokaccount.Classification.clear()
+    if classficationid is not None and classficationid != '':
+        classfication_list = classficationid[:-1].split(',')
+        if len(classfication_list) > 0:
+            for i in range(len(classfication_list)):
+                classfication_id = classfication_list[i]
+                classfication = MaintenanceNumberMissionKeywordClassification.objects.get(
+                    id=classfication_id)
+                tiktokaccount.Classification.add(classfication)
+    tiktokaccount.save()
+    return HttpResponse(reverse('Web:AccountList'))
+
+
+@login_required
+def getaccountlistbyid(request):
+    account_id = request.POST.get('id')
+    account = TikTokAccount.objects.get(id=account_id)
+    if account is not None:
+        ClassificationId = account.GetClassificationId()
+        info = '粉丝：' + str(account.Fans) + '  ' + '关注：' + str(account.Attention) + '  ' + '赞：' + \
+            str(account.Praise) + '  ' + '作品数：' + str(account.Video) + \
+            '  ' + '喜欢：' + str(account.NumOfPraiseToOther)
+        pid = account.GetPID()
+        context = {
+            'remark': account.Remark,
+            'dataid': account.id,
+            'classificationid': ClassificationId,
+            'groupid': '-1' if account.Group is None else account.Group.id,
+            'nickname': account.NickName,
+            'tiktokid': account.TikTokID,
+            'info': info,
+            'url': account.ShareURL,
+            'showwindowexists': account.ShowWindowExists,
+            'pid': pid
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 账号列表
+
+# begin 阿里妈妈配置
+@login_required
+def aliconfig(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetALIConfig'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateALIConfig'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteALIConfig'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetALIConfigByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditALIConfig'))
+    category = GoodClassification.objects.filter(Owner=request.user)
+    location = copy.deepcopy(location_init)
+    location['IsALIConfigPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'aliconfig_status': ALIStatus, 'category': category}
+    return render(request, 'pages/ALIConfig.html', context)
+
+
+@login_required
+def getaliconfig(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalALIConfigSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[aliconfigstatus]')
+
+    data_list = ALIConfig.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(NickName__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = ALIConfig._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'NickName', 'Status', 'PID', 'Remark')
+    data = []
+    for i in range(len(data_result)):
+        aliconfig_id = data_result[i]['id']
+        aliconfig = ALIConfig.objects.get(
+            id=aliconfig_id)
+        CategoryString = aliconfig.GetCategoryString()
+        data_result[i]['CategoryString'] = CategoryString
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_aliconfig_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        ALIConfig.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:ALIConfig'))
+
+
+@login_required
+def createaliconfig(request):
+    NickName = request.POST.get('nickname')
+    PID = request.POST.get('pid')
+    Remark = request.POST.get('remark')
+    category = request.POST.get('category')
+    category_list = []
+    pid_list = PID.split('_')
+    last_pid = pid_list[-1]
+    aliconfig = ALIConfig()
+    aliconfig.NickName = NickName
+    aliconfig.PID = PID
+    aliconfig.LASTPID = last_pid
+    aliconfig.Remark = Remark
+    aliconfig.Owner = request.user
+    aliconfig.save()
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                category = GoodClassification.objects.get(
+                    id=category_id)
+                aliconfig.Category.add(category)
+    return HttpResponse(reverse('Web:ALIConfig'))
+
+
+@login_required
+def editaliconfig(request):
+    data_id = request.POST.get('id')
+    nickname = request.POST.get('nickname')
+    pid = request.POST.get('pid')
+    remark = request.POST.get('remark')
+    category = request.POST.get('category')
+    category_list = []
+    pid_list = pid.split('_')
+    last_pid = pid_list[-1]
+    aliconfig = ALIConfig.objects.get(id=data_id)
+    aliconfig.NickName = nickname
+    aliconfig.PID = pid
+    aliconfig.LASTPID = last_pid
+    aliconfig.Remark = remark
+    aliconfig.Category.clear()
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                category = GoodClassification.objects.get(
+                    id=category_id)
+                aliconfig.Category.add(category)
+    aliconfig.save()
+    return HttpResponse(reverse('Web:ALIConfig'))
+
+
+@login_required
+def getaliconfigbyid(request):
+    aliconfig_id = request.POST.get('id')
+    aliconfig = ALIConfig.objects.get(id=aliconfig_id)
+    if aliconfig is not None:
+        CategoryId = aliconfig.GetCategoryId()
+        context = {
+            'nickname': aliconfig.NickName,
+            'pid': aliconfig.PID,
+            'remark': aliconfig.Remark,
+            'dataid': aliconfig.id,
+            'categoryid': CategoryId,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 阿里妈妈配置
+
+
+@login_required
+def alreadysendvideo(request):
+    location = copy.deepcopy(location_init)
+    location['IsAlreadySendVideoPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/AlreadySendVideo.html', context)
+
+
+@login_required
+def commoditydataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommodityDataAnalysisPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommodityDataAnalysis.html', context)
+
+
+@login_required
+def commoditymissionmanage(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommodityMissionManagePage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommodityMissionManage.html', context)
+
+
+@login_required
+def commodityselection(request):
+    location = copy.deepcopy(location_init)
+    location['IsCommoditySelectionPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CommoditySelection.html', context)
+
+
+# begin 我的商品
+@login_required
+def mycommodity(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetMyCommodity'))
+    create_url = request.build_absolute_uri(reverse('Web:CreateMyCommodity'))
+    delete_url = request.build_absolute_uri(reverse('Web:DeleteMyCommodity'))
+    gettaobaocommodity_url = request.build_absolute_uri(
+        reverse('Web:GetTaoBaoCommodity'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMyCommodityById'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditMyCommodity'))
+    category = GoodClassification.objects.filter(Owner=request.user)
+    location = copy.deepcopy(location_init)
+    location['IsMyCommodityPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'gettaobaocommodity_url': gettaobaocommodity_url, 'create_url': create_url,
+               'get_by_id_url': get_by_id_url, 'edit_url': edit_url, 'category': category, }
+    return render(request, 'pages/MyCommodity.html', context)
+
+
+@login_required
+def getmycommodity(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalCommoditySearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    type = request.POST.get('query[commodityType]')
+
+    commodity_list = Goods.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        commodity_list = commodity_list.filter(Title__contains=generalSearch)
+
+    if type is not None:
+        commodity_list = commodity_list.filter(GoodClassifications__id=type)
+
+    fields_list = Goods._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        commodity_list = commodity_list.order_by(field)
+
+    paginator = Paginator(commodity_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    commodity_result = page_result.object_list.values('id', 'Pic1',
+                                                      'Title', 'OutSidePlatformID', 'Price',
+                                                      'Sales', 'CommissionPercent', 'OutSidePlatformURL',
+                                                      'CreateTime')
+    data = []
+    for i in range(len(commodity_result)):
+        commodity_id = commodity_result[i]['id']
+        commodity = Goods.objects.get(id=commodity_id)
+        CategoryString = commodity.GetCategoryString()
+        commodity_result[i]['CategoryString'] = CategoryString
+        data.append(commodity_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_mycommodity_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        Goods.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:MyCommodity'))
+
+
+@login_required
+def createmycommodity(request):
+    try:
+        pic1 = request.POST.get('pic1')
+        pic2 = request.POST.get('pic2')
+        pic3 = request.POST.get('pic3')
+        pic4 = request.POST.get('pic4')
+        pic5 = request.POST.get('pic5')
+        url = request.POST.get('url')
+        title = request.POST.get('title')
+        price = request.POST.get('price')
+        sales = request.POST.get('sales')
+        commissionpercent = request.POST.get('commissionpercent')
+        outsideplatformid = request.POST.get('outsideplatformid')
+        pidurl = request.POST.get('pidurl')
+        couponurl = request.POST.get('couponurl')
+        category = request.POST.get('category')
+        good = Goods()
+        good.Pic1 = pic1
+        good.Pic2 = pic2
+        good.Pic3 = pic3
+        good.Pic4 = pic4
+        good.Pic5 = pic5
+        good.Title = title
+        good.OutSidePlatformID = outsideplatformid
+        good.Price = price
+        good.Sales = sales
+        good.CommissionPercent = commissionpercent
+        good.OutSidePlatformURL = url
+        good.Owner = request.user
+        good.CouponURL = couponurl
+        good.PIDURL = pidurl
+        good.save()
+        if category is not None and category != '':
+            category_list = category[:-1].split(',')
+            if len(category_list) > 0:
+                for i in range(len(category_list)):
+                    category_id = category_list[i]
+                    category = GoodClassification.objects.get(id=category_id)
+                    good.GoodClassifications.add(category)
+        return HttpResponse(reverse('Web:MyCommodity'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def gettaobaocommodity(request):
+    url = request.POST.get('url')
+
+    aliconfig = ALIConfig.objects.all().first()
+    adzone = aliconfig.LASTPID
+
+    req = top.api.TbkDgMaterialOptionalRequest()
+    req.set_app_info(top.appinfo(taobao_appKey, taobao_appSecret))
+
+    req.q = url
+    req.adzone_id = adzone
+    try:
+        resp = req.getResponse()
+        print(resp)
+        pic1 = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['pict_url']
+        pic2 = ''
+        pic3 = ''
+        pic4 = ''
+        pic5 = ''
+        small_pic_list = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['small_images']['string']
+        if len(small_pic_list) > 0:
+            pic2 = small_pic_list[0]
+        if len(small_pic_list) > 1:
+            pic3 = small_pic_list[1]
+        if len(small_pic_list) > 2:
+            pic4 = small_pic_list[2]
+        if len(small_pic_list) > 3:
+            pic5 = small_pic_list[3]
+        title = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['title']
+        price = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['reserve_price']
+        outsideplatformid = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['item_id']
+        commissionrate = int(resp['tbk_dg_material_optional_response']
+                             ['result_list']['map_data'][0]['commission_rate']) / 100
+        volume = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['volume']
+        pidurl = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['url']
+        coupon_share_url = ''
+        if 'coupon_share_url' in resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]:
+            coupon_share_url = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['coupon_share_url']
+        context = {'pic1': pic1, 'pic2': pic2, 'pic3': pic3, 'pic4': pic4, 'pic5': pic5,
+                   'title': title, 'price': price, 'outsideplatformid': outsideplatformid,
+                   'commissionrate': commissionrate, 'volume': volume, 'pidurl': pidurl,
+                   'coupon_share_url': coupon_share_url}
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editmycommodity(request):
+    commodity_id = request.POST.get('id')
+    category = request.POST.get('category')
+    commodity = Goods.objects.get(id=commodity_id)
+    commodity.Price = price
+    commodity.Sales = sales
+    commodity.CommissionPercent = commissionpercent
+    commodity.save()
+    commodity.GoodClassifications.clear()
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                category = GoodClassification.objects.get(id=category_id)
+                commodity.GoodClassifications.add(category)
+    return HttpResponse(reverse('Web:MyCommodity'))
+
+
+@login_required
+def getmycommoditybyid(request):
+    commodity_id = request.POST.get('id')
+    commodity = Goods.objects.get(id=commodity_id)
+    if commodity is not None:
+        CategoryId = commodity.GetCategoryId()
+        context = {
+            'pic1': commodity.Pic1,
+            'pic2': commodity.Pic2,
+            'pic3': commodity.Pic3,
+            'pic4': commodity.Pic4,
+            'pic5': commodity.Pic5,
+            'url': commodity.OutSidePlatformURL,
+            'title': commodity.Title,
+            'price': commodity.Price,
+            'sales': commodity.Sales,
+            'commissionpercent': commodity.CommissionPercent,
+            'outsideplatformid': commodity.OutSidePlatformID,
+            'dataid': commodity.id,
+            'categoryid': CategoryId,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+# end 我的商品
+
+# begin 商品类别
+@login_required
+def commoditycategory(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetCommodityCategory'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateCommodityCategory'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteCommodityCategory'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetCommodityCategoryByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditCommodityCategory'))
+    location = copy.deepcopy(location_init)
+    location['IsCommodityCategoryPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'create_url': create_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/CommodityCategory.html', context)
+
+
+@login_required
+def getcommoditycategory(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = GoodClassification.objects.filter(Owner=request.user)
+
+    fields_list = GoodClassification._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_commoditycategory_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        GoodClassification.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:CommodityCategory'))
+
+
+@login_required
+def createcommoditycategory(request):
+    try:
+        name = request.POST.get('name')
+        goodClassification = GoodClassification()
+        goodClassification.Name = name
+        goodClassification.Owner = request.user
+        goodClassification.save()
+        return HttpResponse(reverse('Web:CommodityCategory'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editcommoditycategory(request):
+    data_id = request.POST.get('id')
+    name = request.POST.get('name')
+    commodity = GoodClassification.objects.get(id=data_id)
+    commodity.Name = name
+    commodity.save()
+    return HttpResponse(reverse('Web:CommodityCategory'))
+
+
+@login_required
+def getcommoditycategorybyid(request):
+    data_id = request.POST.get('id')
+    data = GoodClassification.objects.get(id=data_id)
+    context = {
+        'name': data.Name,
+        'dataid': data.id,
+    }
+    if data is not None:
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+# end 商品类别
+
+# begin 我的视频
+@login_required
+def myvideo(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetMyVideo'))
+    create_url = request.build_absolute_uri(reverse('Web:CreateMyVideo'))
+    delete_url = request.build_absolute_uri(reverse('Web:DeleteMyVideo'))
+    get_by_id_url = request.build_absolute_uri(reverse('Web:GetMyVideobyID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditMyVideo'))
+    upload_url = request.build_absolute_uri(reverse('Web:UploadMyVideo'))
+    get_video_url_url = request.build_absolute_uri(
+        reverse('Web:GetMyVideoURLByID'))
+    commodity_data_url = request.build_absolute_uri(
+        reverse('Web:GetMyCommodity'))
+    get_commodity_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMyCommodityById'))
+    device_data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    getdevicenamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceNameByIDs'))
+    createvideomission_url = request.build_absolute_uri(
+        reverse('Web:CreateVideoMission'))
+    video_category = VideoClassification.objects.filter(Owner=request.user)
+    commodity_category = GoodClassification.objects.filter(Owner=request.user)
+    location = copy.deepcopy(location_init)
+    location['IsMyVideoPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'create_url': create_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'video_category': video_category,
+               'upload_url': upload_url, 'get_video_url_url': get_video_url_url,
+               'commodity_data_url': commodity_data_url,
+               'commodity_category': commodity_category, 'get_commodity_by_id_url': get_commodity_by_id_url,
+               'device_data_url': device_data_url, 'getdevicenamebyids_url': getdevicenamebyids_url,
+               'createvideomission_url': createvideomission_url}
+    return render(request, 'pages/MyVideo.html', context)
+
+
+@login_required
+def getmyvideo(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalVideoSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    type = request.POST.get('query[videoType]')
+
+    videos_list = Videos.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        videos_list = videos_list.filter(Title__contains=generalSearch)
+
+    if type is not None:
+        videos_list = videos_list.filter(VideoClassifications__id=type)
+
+    fields_list = Videos._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        videos_list = videos_list.order_by(field)
+
+    paginator = Paginator(videos_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    video_result = page_result.object_list.values(
+        'id', 'Remark', 'Title', 'CreateTime')
+    data = []
+    for i in range(len(video_result)):
+        video_id = video_result[i]['id']
+        video = Videos.objects.get(id=video_id)
+        CategoryString = video.GetCategoryString()
+        video_result[i]['CategoryString'] = CategoryString
+        data.append(video_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_myvideo_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        Videos.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:MyVideo'))
+
+
+@login_required
+def createmyvideo(request):
+    if request.method != 'POST':
+        video = Videos()
+        video.save()
+        context = {'dataid': video.id}
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        try:
+            title = request.POST.get('title')
+            remark = request.POST.get('remark')
+            category = request.POST.get('category')
+            dataid = request.POST.get('dataid')
+            commodityid = request.POST.get('commodityid')
+            video = Videos.objects.get(id=dataid)
+            video.Title = title
+            video.Remark = remark
+            video.Owner = request.user
+            if commodityid is not None and commodityid != '':
+                commodity = Goods.objects.get(id=commodityid)
+                video.Goods = commodity
+            video.save()
+            if category is not None and category != '':
+                category_list = category[:-1].split(',')
+                if len(category_list) > 0:
+                    for i in range(len(category_list)):
+                        category_id = category_list[i]
+                        category = VideoClassification.objects.get(
+                            id=category_id)
+                        video.VideoClassifications.add(category)
+            return HttpResponse(reverse('Web:MyVideo'))
+        except Exception as e:
+            print(e)
+            return HttpResponse("Error")
+
+
+@login_required
+def editmyvideo(request):
+    video_id = request.POST.get('id')
+    title = request.POST.get('title')
+    remark = request.POST.get('remark')
+    category = request.POST.get('category')
+    commodityid = request.POST.get('commodityid')
+    video = Videos.objects.get(id=video_id)
+    video.Title = title
+    video.Remark = remark
+    if commodityid is not None and commodityid != '':
+        commodity = Goods.objects.get(id=commodityid)
+        video.Goods = commodity
+    else:
+        video.Goods = None
+    video.save()
+    video.VideoClassifications.clear()
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                category = VideoClassification.objects.get(id=category_id)
+                video.VideoClassifications.add(category)
+    return HttpResponse(reverse('Web:MyVideo'))
+
+
+@login_required
+def uploadmyvideo(request):
+    dataid = request.POST.get('dataid')
+    video_file = request.FILES['file']
+    video = Videos.objects.get(id=dataid)
+    file_content = ContentFile(video_file.read())  # 创建File对象
+    video.URL.save(video_file.name, file_content)  # 保存文件到car的photo域
+    video.save()
+    return HttpResponse("OK")
+
+
+@login_required
+def getmyvideobyid(request):
+    video_id = request.POST.get('id')
+    video = Videos.objects.get(id=video_id)
+    if video is not None:
+        CommodityName = video.GetCommodityName()
+        CommodityId = video.GetCommodityId()
+        CategoryId = video.GetCategoryId()
+        context = {
+            'title': video.Title,
+            'url': video.URL.url,
+            'remark': video.Remark,
+            'dataid': video.id,
+            'categoryid': CategoryId,
+            'commodityname': CommodityName,
+            'commodityid': CommodityId,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def getmyvideourlbyid(request):
+    video_id = request.POST.get('id')
+    video = Videos.objects.get(id=video_id)
+    if video is not None:
+        context = {
+            'url': video.URL.url,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def createvideomission(request):
+    device_id = request.POST.get('deviceid')
+    device_id_list = device_id.split(',')
+    data_id = request.POST.get('dataid')
+    keyword = request.POST.get('keyword')
+    starttime = request.POST.get('starttime')
+    video = Videos.objects.get(id=data_id)
+    if video is not None and len(device_id_list) > 0:
+        # 视频地址
+        video_url = video.URL.url
+        # 视频标题
+        video_title = video.Title
+        # 话题
+        video_keyword = keyword
+
+        # 发布任务
+        for i in range(len(device_id_list)):
+            id = device_id_list[i]
+            device = MobilePhone.objects.get(id=id)
+            if device is not None:
+
+                # 商品相关
+                good_url = ''
+                good_title = ''
+                good_category = ''
+                coupon_share_url = ''
+                pidurl = ''
+                if video.Goods is not None and device.ALIConfig is not None:
+                    adzone = device.ALIConfig.LASTPID
+
+                    req = top.api.TbkDgMaterialOptionalRequest()
+                    req.set_app_info(top.appinfo(
+                        taobao_appKey, taobao_appSecret))
+
+                    req.q = video.Goods.OutSidePlatformURL
+                    req.adzone_id = adzone
+                    try:
+                        resp = req.getResponse()
+                        pidurl = resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]['url']
+                        if 'coupon_share_url' in resp['tbk_dg_material_optional_response']['result_list']['map_data'][0]:
+                            coupon_share_url = resp['tbk_dg_material_optional_response'][
+                                'result_list']['map_data'][0]['coupon_share_url']
+                        # 淘宝链接
+                        good_url = pidurl
+                        # 商品短标题
+                        good_title = video.Goods.Title
+                        # 商品分类
+                        good_category = video.Goods.GetCategoryString()
+                    except Exception as e:
+                        print(e)
+                        return HttpResponse("Error")
+
+                task = VideoMission()
+                task.MobilePhone = device
+                task.Status = TaskStatus[0][0]
+                task.Owner = request.user
+                task.VideoURL = video_url
+                task.VideoTitle = video_title
+                task.VideoKeyword = video_keyword
+                task.GoodURL = good_url
+                task.CouponURL = coupon_share_url
+                task.PIDURL = pidurl
+                task.GoodTitle = good_title
+                task.GoodCategory = good_category
+                task.Video = video
+                if starttime is not None and starttime != '':
+                    task.StartTime = datetime.datetime.strptime(
+                        starttime, '%Y-%m-%d %H:%M:%S')
+                else:
+                    task.StartTime = datetime.datetime.now()
+                task.Priority = 0
+                task.save()
+            else:
+                continue
+        return HttpResponse(reverse('Web:MyVideo'))
+    else:
+        return HttpResponse('Error')
+
+
+# end 我的视频
+
+
+@login_required
+def ordercollect(request):
+    location = copy.deepcopy(location_init)
+    location['IsOrderCollectPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/OrderCollect.html', context)
+
+
+@login_required
+def videodataanalysis(request):
+    location = copy.deepcopy(location_init)
+    location['IsVideoDataAnalysisPage'] = True
+    location['IsCommodityManageMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/VideoDataAnalysis.html', context)
+
+
+# begin 视频标签
+@login_required
+def videolabel(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetVideoLabel'))
+    create_url = request.build_absolute_uri(reverse('Web:CreateVideoLabel'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteCommodityCategory'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetVideoLabelByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditVideoLabel'))
+    location = copy.deepcopy(location_init)
+    location['IsVideoLabelPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'create_url': create_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/VideoLabel.html', context)
+
+
+@login_required
+def getvideolabel(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = VideoClassification.objects.filter(Owner=request.user)
+
+    fields_list = VideoClassification._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_videolabel_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        VideoClassification.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:VideoLabel'))
+
+
+@login_required
+def createvideolabel(request):
+    try:
+        name = request.POST.get('name')
+        videoClassification = VideoClassification()
+        videoClassification.Name = name
+        videoClassification.Owner = request.user
+        videoClassification.save()
+        return HttpResponse(reverse('Web:VideoLabel'))
+    except Exception as e:
+        print(e)
+        return HttpResponse("Error")
+
+
+@login_required
+def editvideolabel(request):
+    data_id = request.POST.get('id')
+    name = request.POST.get('name')
+    videoClassification = VideoClassification.objects.get(id=data_id)
+    videoClassification.Name = name
+    videoClassification.save()
+    return HttpResponse(reverse('Web:VideoLabel'))
+
+
+@login_required
+def getvideolabelbyid(request):
+    data_id = request.POST.get('id')
+    data = VideoClassification.objects.get(id=data_id)
+    context = {
+        'name': data.Name,
+        'dataid': data.id,
+    }
+    if data is not None:
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+# end 视频标签
+
+# begin 视频任务
+@login_required
+def videomission(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetVideoMission'))
+    delete_url = request.build_absolute_uri(reverse('Web:DeleteVideoMission'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetVideoMissionByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditVideoMission'))
+    location = copy.deepcopy(location_init)
+    location['IsVideoMissionPage'] = True
+    location['IsVideoManageMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'delete_url': delete_url,
+               'get_by_id_url': get_by_id_url, 'edit_url': edit_url, 'mission_status': TaskStatus}
+    return render(request, 'pages/VideoMission.html', context)
+
+
+@login_required
+def getvideomission(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalVideoMissionSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[videomissionstatus]')
+
+    data_list = VideoMission.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(VideoTitle__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = VideoMission._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'MobilePhone__id', 'Status', 'VideoTitle', 'VideoKeyword',
+                                                 'GoodTitle', 'GoodCategory', 'CreateTime', 'StartTime')
+    data = []
+    for i in range(len(data_result)):
+        videomission_id = data_result[i]['id']
+        videomission = VideoMission.objects.get(id=videomission_id)
+        video_id = videomission.Video.id
+        video = Videos.objects.get(id=video_id)
+        CategoryString = video.GetCategoryString()
+        data_result[i]['VideoCategoryString'] = CategoryString
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_videomission_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        VideoMission.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:VideoMission'))
+
+
+@login_required
+def editvideomission(request):
+    data_id = request.POST.get('id')
+    videoKeyword = request.POST.get('videokeyword')
+    starttime = request.POST.get('starttime')
+    videoMission = VideoMission.objects.get(id=data_id)
+    videoMission.VideoKeyword = videoKeyword
+    if starttime is not None and starttime != '':
+        videoMission.StartTime = datetime.datetime.strptime(
+            starttime, '%Y-%m-%d %H:%M:%S')
+    else:
+        videoMission.StartTime = datetime.datetime.now()
+    videoMission.save()
+    return HttpResponse(reverse('Web:VideoMission'))
+
+
+@login_required
+def getvideomissionbyid(request):
+    data_id = request.POST.get('id')
+    data = VideoMission.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'mobilephoneid': data.MobilePhone.id,
+            'status': data.Status,
+            'videourl': data.VideoURL,
+            'videotitle': data.VideoTitle,
+            'videokeyword': data.VideoKeyword,
+            'videocategory': data.Video.GetCategoryString(),
+            'videoremark': data.Video.Remark,
+            'goodurl': data.GoodURL,
+            'goodtitle': data.GoodTitle,
+            'goodcategory': data.GoodCategory,
+            'dataid': data.id,
+            'starttime': data.StartTime,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 视频任务
+
+# begin 关注任务
+@login_required
+def publishfollowmission(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetFollowMission'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateFollowMission'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteFollowMission'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetFollowMissionByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditFollowMission'))
+    device_data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    getdevicenamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceNameByIDs'))
+    location = copy.deepcopy(location_init)
+    location['IsPublishFollowMissionPage'] = True
+    location['IsMissionMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'getdevicenamebyids_url': getdevicenamebyids_url,
+               'device_data_url': device_data_url, 'mission_status': TaskStatus}
+    return render(request, 'pages/PublishFollowMission.html', context)
+
+
+@login_required
+def getfollowmission(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalFollowMissionSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[followmissionstatus]')
+
+    data_list = FollowMission.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Title__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = FollowMission._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'MobilePhone__id', 'Status', 'Title', 'TikTokID', 'PeopleLimit',
+        'TimeLimit', 'Interval', 'CreateTime', 'StartTime', 'EndTime')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_followmission_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        FollowMission.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishFollowMission'))
+
+
+@login_required
+def createfollowmission(request):
+    device_id = request.POST.get('deviceid')
+    device_id_list = device_id.split(',')
+    title = request.POST.get('title')
+    tiktokid = request.POST.get('tiktokid')
+    peoplelimit = request.POST.get('peoplelimit')
+    timelimit = request.POST.get('timelimit')
+    interval = request.POST.get('interval')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    if len(device_id_list) > 0:
+        # 发布任务
+        for i in range(len(device_id_list)):
+            id = device_id_list[i]
+            device = MobilePhone.objects.get(id=id)
+            if device is not None:
+                task = FollowMission()
+                task.MobilePhone = device
+                task.Status = TaskStatus[0][0]
+                task.Owner = request.user
+                task.TikTokID = tiktokid
+                task.Title = title
+                task.PeopleLimit = peoplelimit
+                task.TimeLimit = timelimit
+                task.Interval = interval
+                if starttime != '' and endtime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                elif starttime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                elif endtime != '':
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                    task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+                else:
+                    task.StartTime = datetime.datetime.now()
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                task.Priority = 0
+                task.save()
+            else:
+                return HttpResponse('Error')
+        return HttpResponse(reverse('Web:PublishFollowMission'))
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def editfollowmission(request):
+    data_id = request.POST.get('id')
+    title = request.POST.get('title')
+    tiktokid = request.POST.get('tiktokid')
+    peoplelimit = request.POST.get('peoplelimit')
+    timelimit = request.POST.get('timelimit')
+    interval = request.POST.get('interval')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    task = FollowMission.objects.get(id=data_id)
+    task.Title = title
+    task.TikTokID = tiktokid
+    task.PeopleLimit = peoplelimit
+    task.TimeLimit = timelimit
+    task.Interval = interval
+    if starttime != '' and endtime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+    elif starttime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    elif endtime != '':
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+        task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+    else:
+        task.StartTime = datetime.datetime.now()
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    task.save()
+    return HttpResponse(reverse('Web:PublishFollowMission'))
+
+
+@login_required
+def getfollowmissionbyid(request):
+    data_id = request.POST.get('id')
+    data = FollowMission.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'mobilephoneid': data.MobilePhone.id,
+            'status': data.Status,
+            'tiktokid': data.TikTokID,
+            'title': data.Title,
+            'peoplelimit': data.PeopleLimit,
+            'timelimit': data.TimeLimit,
+            'interval': data.Interval,
+            'dataid': data.id,
+            'starttime': data.StartTime,
+            'endtime': data.EndTime,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 关注任务
+
+
+# begin 养号任务
+@login_required
+def publishmaintenancenumbermission(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMission'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateMaintenanceNumberMission'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteMaintenanceNumberMission'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditMaintenanceNumberMission'))
+    device_data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    keyword_data_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeyword'))
+    getkeywordnamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeywordNamesByID'))
+    getdevicenamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceNameByIDs'))
+    MaintenanceNumberMissionKeyword_List = MaintenanceNumberMissionKeyword.objects.all()
+    SelectMaintenanceNumberMissionKeyword = []
+    for i in range(len(MaintenanceNumberMissionKeyword_List)):
+        per = MaintenanceNumberMissionKeyword_List[i]
+        if per.Classification is None:
+            select = {'id': per.id, 'SelectName': per.Name,
+                      'SelectClassification': ''}
+        else:
+            select = {'id': per.id, 'SelectName': per.Name,
+                      'SelectClassification': per.Classification.Name}
+        SelectMaintenanceNumberMissionKeyword.append(select)
+    create_keyword_url = request.build_absolute_uri(
+        reverse('Web:CreateMaintenanceNumberMissionKeyword'))
+    location = copy.deepcopy(location_init)
+    location['IsPublishMaintenanceNumberMissionPage'] = True
+    location['IsMissionMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'getdevicenamebyids_url': getdevicenamebyids_url,
+               'device_data_url': device_data_url, 'mission_status': TaskStatus, 'keyword_data_url': keyword_data_url,
+               'getkeywordnamebyids_url': getkeywordnamebyids_url, 'SelectMaintenanceNumberMissionKeyword': SelectMaintenanceNumberMissionKeyword,
+               'create_keyword_url': create_keyword_url}
+    return render(request, 'pages/PublishMaintenanceNumberMission.html', context)
+
+
+@login_required
+def getmaintenancenumbermission(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalMaintenanceNumberMissionSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[maintenancenumbermissionstatus]')
+
+    data_list = MaintenanceNumberMission.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Title__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = MaintenanceNumberMission._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'MobilePhone__id', 'Status', 'Title', 'TikTokID', 'CreateTime', 'StartTime', 'EndTime')
+    data = []
+    for i in range(len(data_result)):
+        maintenancenumbermission_id = data_result[i]['id']
+        maintenancenumbermission = MaintenanceNumberMission.objects.get(
+            id=maintenancenumbermission_id)
+        CategoryString = maintenancenumbermission.GetCategoryString()
+        data_result[i]['KeywordCategoryString'] = CategoryString
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_maintenancenumbermission_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        MaintenanceNumberMission.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishMaintenanceNumberMission'))
+
+
+@login_required
+def createmaintenancenumbermission(request):
+    device_id = request.POST.get('deviceid')
+    device_id_list = device_id.split(',')
+    title = request.POST.get('title')
+    tiktokid = request.POST.get('tiktokid')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    keywordid = request.POST.get('keywordid')
+    keyword_list = []
+    if keywordid is not None and keywordid != '':
+        keyword_list = keywordid.split(',')
+    if len(device_id_list) > 0:
+        # 发布任务
+        for i in range(len(device_id_list)):
+            id = device_id_list[i]
+            device = MobilePhone.objects.get(id=id)
+            if device is not None:
+                task = MaintenanceNumberMission()
+                task.MobilePhone = device
+                task.Status = TaskStatus[0][0]
+                task.Owner = request.user
+                task.TikTokID = tiktokid
+                task.Title = title
+                if starttime != '' and endtime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                elif starttime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                elif endtime != '':
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                    task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+                else:
+                    task.StartTime = datetime.datetime.now()
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                task.Priority = 0
+                task.save()
+                if len(keyword_list) > 0:
+                    for i in range(len(keyword_list)):
+                        keyword_id = keyword_list[i]
+                        keyword = MaintenanceNumberMissionKeyword.objects.get(
+                            id=keyword_id)
+                        task.Keyword.add(keyword)
+            else:
+                return HttpResponse('Error')
+        return HttpResponse(reverse('Web:PublishMaintenanceNumberMission'))
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def editmaintenancenumbermission(request):
+    data_id = request.POST.get('id')
+    title = request.POST.get('title')
+    tiktokid = request.POST.get('tiktokid')
+    keywordid = request.POST.get('keywordid')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    task = MaintenanceNumberMission.objects.get(id=data_id)
+    task.Title = title
+    task.TikTokID = tiktokid
+    task.Keyword.clear()
+    if keywordid is not None and keywordid != '':
+        keyword_list = keywordid.split(',')
+        if len(keyword_list) > 0:
+            for i in range(len(keyword_list)):
+                keyword_id = keyword_list[i]
+                keyword = MaintenanceNumberMissionKeyword.objects.get(
+                    id=keyword_id)
+                task.Keyword.add(keyword)
+    if starttime != '' and endtime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+    elif starttime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    elif endtime != '':
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+        task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+    else:
+        task.StartTime = datetime.datetime.now()
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    task.save()
+    return HttpResponse(reverse('Web:PublishMaintenanceNumberMission'))
+
+
+@login_required
+def getmaintenancenumbermissionbyid(request):
+    data_id = request.POST.get('id')
+    data = MaintenanceNumberMission.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'mobilephoneid': data.MobilePhone.id,
+            'status': data.Status,
+            'tiktokid': data.TikTokID,
+            'title': data.Title,
+            'keyword': data.GetCategoryString(),
+            'keywordids': data.GetCategoryId(),
+            'dataid': data.id,
+            'starttime': data.StartTime,
+            'endtime': data.EndTime,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 养号任务
+
+# begin 养号任务关键字
+@login_required
+def publishmaintenancenumbermissionkeyword(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeyword'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateMaintenanceNumberMissionKeyword'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteMaintenanceNumberMissionKeyword'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeywordByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditMaintenanceNumberMissionKeyword'))
+    classfications = MaintenanceNumberMissionKeywordClassification.objects.all()
+    location = copy.deepcopy(location_init)
+    location['IsMaintenanceNumberMissionKeywordPage'] = True
+    location['IsMLabelMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'classfications': classfications}
+    return render(request, 'pages/MaintenanceNumberMissionKeyword.html', context)
+
+
+@login_required
+def getmaintenancenumbermissionkeyword(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalMaintenanceNumberMissionKeywordSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    classification = request.POST.get('query[classfications]')
+
+    data_list = MaintenanceNumberMissionKeyword.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        if generalSearch == ' ':
+            data_list = data_list.filter(Classification=None)
+        else:
+            my_filter = Q()
+            my_filter = my_filter | Q(Name__contains=generalSearch)
+            my_filter = my_filter | Q(
+                Classification__Name__contains=generalSearch)
+            data_list = data_list.filter(my_filter)
+
+    if classification is not None:
+        if classification == '-1':
+            data_list = data_list.filter(Classification=None)
+        else:
+            data_list = data_list.filter(Classification=classification)
+
+    fields_list = MaintenanceNumberMissionKeyword._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'Name', 'Classification__Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_maintenancenumbermissionkeyword_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        MaintenanceNumberMissionKeyword.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishMaintenanceNumberMissionKeyword'))
+
+
+@login_required
+def createmaintenancenumbermissionkeyword(request):
+    ret = {"status": "NG", "msg": None, "jump": None}
+    name = request.POST.get('name')
+    category = request.POST.get('category')
+    if category is not None and category != '':
+        category_list = category[:-1].split(',')
+        if len(category_list) > 0:
+            for i in range(len(category_list)):
+                category_id = category_list[i]
+                if checkmaintenancenumbermissionkeyword(name, category_id):
+                    category = MaintenanceNumberMissionKeywordClassification.objects.get(
+                        id=category_id)
+                    keyword = MaintenanceNumberMissionKeyword()
+                    keyword.Name = name
+                    keyword.Classification = category
+                    keyword.save()
+                else:
+                    continue
+            ret["status"] = "OK"
+            ret["msg"] = reverse('Web:PublishMaintenanceNumberMissionKeyword')
+            ret["jump"] = reverse('Web:PublishMaintenanceNumberMissionKeyword')
+        else:
+            ret["msg"] = "该关键字已存在，无法保存"
+    else:
+        if checkmaintenancenumbermissionkeyword(name, None):
+            keyword = MaintenanceNumberMissionKeyword()
+            keyword.Name = name
+            keyword.save()
+            ret["status"] = "OK"
+            ret["msg"] = keyword.id
+            ret["jump"] = reverse('Web:PublishMaintenanceNumberMissionKeyword')
+        else:
+            ret["msg"] = "该关键字已存在，无法保存"
+    return HttpResponse(json.dumps(ret, ensure_ascii=False), content_type="application/json,charset=utf-8")
+
+
+@login_required
+def editmaintenancenumbermissionkeyword(request):
+    ret = {"status": "NG", "msg": None, "jump": None}
+    name = request.POST.get('name')
+    data_id = request.POST.get('id')
+    category_id = request.POST.get('category')
+    if checkmaintenancenumbermissionkeyword(name, category_id):
+        maintenanceNumberMissionKeyword = MaintenanceNumberMissionKeyword.objects.get(
+            id=data_id)
+        maintenanceNumberMissionKeyword.Name = name
+        if category_id == '':
+            maintenanceNumberMissionKeyword.Classification = None
+        else:
+            category = MaintenanceNumberMissionKeywordClassification.objects.get(
+                id=category_id)
+            maintenanceNumberMissionKeyword.Classification = category
+        maintenanceNumberMissionKeyword.save()
+        ret["status"] = "OK"
+        ret["jump"] = reverse('Web:PublishMaintenanceNumberMissionKeyword')
+    else:
+        ret["msg"] = "该关键字已存在，无法保存"
+    return HttpResponse(json.dumps(ret, ensure_ascii=False), content_type="application/json,charset=utf-8")
+
+
+@login_required
+def getmaintenancenumbermissionkeywordbyid(request):
+    data_id = request.POST.get('id')
+    data = MaintenanceNumberMissionKeyword.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'name': data.Name,
+            'dataid': data.id,
+            'categoryid': '' if data.Classification is None else data.Classification.id
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def getmaintenancenumbermissionkeywordnamesbyid(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    keyword_name_string = ''
+    if len(id_list) > 0:
+        for i in range(len(id_list)):
+            id = id_list[i]
+            keyword = MaintenanceNumberMissionKeyword.objects.get(id=id)
+            tag = '' if keyword.Classification is None else keyword.Classification.Name
+            keyword_name_string = keyword_name_string + keyword.Name + '-' + tag + ','
+        context = {
+            'ids': ids[:-1],
+            'keyword_name_string': keyword_name_string[:-1]
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+
+def checkmaintenancenumbermissionkeyword(name, categoryid):
+    my_filter = Q()
+    my_filter = my_filter & Q(Name=name)
+    my_filter = my_filter & Q(Classification__id=categoryid)
+    check = MaintenanceNumberMissionKeyword.objects.filter(my_filter)
+    if check.count() == 0:
+        return True
+    else:
+        return False
+# end 养号任务关键字
+
+# begin 养号任务关键字类型
+@login_required
+def publishmaintenancenumbermissionkeywordclassification(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeywordClassification'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateMaintenanceNumberMissionKeywordClassification'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteMaintenanceNumberMissionKeywordClassification'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMaintenanceNumberMissionKeywordClassificationByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditMaintenanceNumberMissionKeywordClassification'))
+    location = copy.deepcopy(location_init)
+    location['IsMaintenanceNumberMissionKeywordClassificationPage'] = True
+    location['IsMLabelMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/MaintenanceNumberMissionKeywordClassification.html', context)
+
+
+@login_required
+def getmaintenancenumbermissionkeywordclassification(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalMaintenanceNumberMissionKeywordClassificationSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = MaintenanceNumberMissionKeywordClassification.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Name__contains=generalSearch)
+
+    fields_list = MaintenanceNumberMissionKeywordClassification._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'Name')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_maintenancenumbermissionkeywordclassification_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        MaintenanceNumberMissionKeywordClassification.objects.filter(
+            id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishMaintenanceNumberMissionKeywordClassification'))
+
+
+@login_required
+def createmaintenancenumbermissionkeywordclassification(request):
+    ret = {"status": "NG", "msg": None}
+    name = request.POST.get('name')
+    check_name = MaintenanceNumberMissionKeywordClassification.objects.filter(
+        Name=name)
+    if check_name.count() == 0:
+        maintenanceNumberMissionKeywordClassification = MaintenanceNumberMissionKeywordClassification()
+        maintenanceNumberMissionKeywordClassification.Name = name
+        maintenanceNumberMissionKeywordClassification.save()
+        ret["status"] = "OK"
+        ret["msg"] = reverse(
+            'Web:PublishMaintenanceNumberMissionKeywordClassification')
+    else:
+        ret["msg"] = "该标签已存在，无法新增"
+    return HttpResponse(json.dumps(ret, ensure_ascii=False), content_type="application/json,charset=utf-8")
+
+
+@login_required
+def editmaintenancenumbermissionkeywordclassification(request):
+    ret = {"status": "NG", "msg": None}
+    data_id = request.POST.get('id')
+    name = request.POST.get('name')
+    check_name = MaintenanceNumberMissionKeywordClassification.objects.filter(
+        Name=name)
+    if check_name.count() == 0:
+        maintenanceNumberMissionKeywordClassification = MaintenanceNumberMissionKeywordClassification.objects.get(
+            id=data_id)
+        maintenanceNumberMissionKeywordClassification.Name = name
+        maintenanceNumberMissionKeywordClassification.save()
+        ret["status"] = "OK"
+        ret["msg"] = reverse(
+            'Web:PublishMaintenanceNumberMissionKeywordClassification')
+    else:
+        ret["msg"] = "该标签已存在，无法保存"
+    return HttpResponse(json.dumps(ret, ensure_ascii=False), content_type="application/json,charset=utf-8")
+
+
+@login_required
+def getmaintenancenumbermissionkeywordclassificationbyid(request):
+    data_id = request.POST.get('id')
+    data = MaintenanceNumberMissionKeywordClassification.objects.get(
+        id=data_id)
+    if data is not None:
+        context = {
+            'name': data.Name,
+            'dataid': data.id,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 养号任务关键字类型
+
+# begin 互刷任务
+@login_required
+def publishmutualbrushmission(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetMutualBrushMission'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateMutualBrushMission'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteMutualBrushMission'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetMutualBrushMissionByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditMutualBrushMission'))
+    location = copy.deepcopy(location_init)
+    location['IsPublishMutualBrushMissionPage'] = True
+    location['IsMissionMenu'] = True
+    location['IsMutualBrushMissionSubMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'mission_status': TaskStatus}
+    return render(request, 'pages/PublishMutualBrushMission.html', context)
+
+
+@login_required
+def getmutualbrushmission(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalFollowMissionSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[mutualbrushmissionstatus]')
+
+    data_list = MutualBrushMission.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Title__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = MutualBrushMission._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'MobilePhone__id', 'Status', 'VideoURL', 'IsLike', 'CommentText',
+        'Title', 'CreateTime', 'StartTime')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_mutualbrushmission_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        MutualBrushMission.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishMutualBrushMission'))
+
+
+@login_required
+def createmutualbrushmission(request):
+    title = request.POST.get('title')
+    count = int(request.POST.get('count'))
+    islikerate = int(request.POST.get('islikerate'))
+    videourl = request.POST.get('videourl')
+    starttime = request.POST.get('starttime')
+    if count != 0:
+        total_mobile_count = MobilePhone.objects.all().count()
+
+        if count >= total_mobile_count:
+            # 如果发布任务数量比手机数量多，则全部手机都有任务
+            work_mobile_id_list = list(
+                MobilePhone.objects.all().values_list('id', flat=True))
+        else:
+            # 否则，随机抽取手机
+            mobile_id_list = list(
+                MobilePhone.objects.all().values_list('id', flat=True))
+            work_mobile_id_list = random.sample(mobile_id_list, count)
+
+        if work_mobile_id_list is not None and len(work_mobile_id_list) > 0:
+            # 计算需要点赞的手机
+            is_like_count = math.floor(
+                len(work_mobile_id_list) * islikerate / 100)
+            is_like_mobile_id_list = random.sample(
+                work_mobile_id_list, is_like_count)
+
+            # 获取评论库
+            comment_library_list = list(
+                CommentLibrary.objects.all().values_list('Text', flat=True))
+            comment_library_list.append('')
+
+            # 新建任务
+            for i in range(len(work_mobile_id_list)):
+                mobile_id = work_mobile_id_list[i]
+                mobile = MobilePhone.objects.get(id=mobile_id)
+                if mobile is not None:
+                    task = MutualBrushMission()
+                    task.MobilePhone = mobile
+                    task.Status = TaskStatus[0][0]
+                    task.Owner = request.user
+                    task.Title = title
+                    task.VideoURL = videourl
+                    if mobile_id in is_like_mobile_id_list:
+                        task.IsLike = True
+                    else:
+                        task.IsLike = False
+                    task.CommentText = random.sample(
+                        comment_library_list, 1)[0]
+                    if starttime is not None and starttime != '':
+                        task.StartTime = datetime.datetime.strptime(
+                            starttime, '%Y-%m-%d %H:%M:%S')
+                    else:
+                        task.StartTime = datetime.datetime.now()
+                    task.Priority = 0
+                    task.save()
+                else:
+                    return HttpResponse('Error')
+
+            return HttpResponse(reverse('Web:PublishMutualBrushMission'))
+        else:
+            return HttpResponse('Error')
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def editmutualbrushmission(request):
+    data_id = request.POST.get('id')
+    videourl = request.POST.get('videourl')
+    islike = request.POST.get('islike')
+    commenttext = request.POST.get('commenttext')
+    title = request.POST.get('title')
+    starttime = request.POST.get('starttime')
+    task = MutualBrushMission.objects.get(id=data_id)
+    task.VideoURL = videourl
+    if islike == 'false':
+        task.IsLike = False
+    else:
+        task.IsLike = True
+    task.CommentText = commenttext
+    task.Title = title
+    if starttime is not None and starttime != '':
+        task.StartTime = datetime.datetime.strptime(
+            starttime, '%Y-%m-%d %H:%M:%S')
+    else:
+        task.StartTime = datetime.datetime.now()
+    task.save()
+    return HttpResponse(reverse('Web:PublishMutualBrushMission'))
+
+
+@login_required
+def getmutualbrushmissionbyid(request):
+    data_id = request.POST.get('id')
+    data = MutualBrushMission.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'mobilephoneid': data.MobilePhone.id,
+            'status': data.Status,
+            'videourl': data.VideoURL,
+            'islike': data.IsLike,
+            'commenttext': data.CommentText,
+            'title': data.Title,
+            'dataid': data.id,
+            'starttime': data.StartTime,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 互刷任务
+
+# begin 刷粉任务
+@login_required
+def publishscanmission(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetScanMission'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateScanMission'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteScanMission'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetScanMissionByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditScanMission'))
+    device_data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    getdevicenamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceNameByIDs'))
+    location = copy.deepcopy(location_init)
+    location['IsPublishScanMissionPage'] = True
+    location['IsMissionMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'getdevicenamebyids_url': getdevicenamebyids_url,
+               'device_data_url': device_data_url, 'mission_status': TaskStatus}
+    return render(request, 'pages/PublishScanMission.html', context)
+
+
+@login_required
+def getscanmission(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalScanMissionSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+    status = request.POST.get('query[scanmissionstatus]')
+
+    data_list = ScanMission.objects.filter(Owner=request.user)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Title__contains=generalSearch)
+
+    if status is not None:
+        data_list = data_list.filter(Status=status)
+
+    fields_list = ScanMission._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'MobilePhone__id', 'Status', 'Title', 'VideoURL', 'PeopleLimit',
+        'TimeLimit', 'Interval', 'CreateTime', 'StartTime', 'EndTime')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_scanmission_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        ScanMission.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:PublishScanMission'))
+
+
+@login_required
+def createscanmission(request):
+    device_id = request.POST.get('deviceid')
+    device_id_list = device_id.split(',')
+    title = request.POST.get('title')
+    videourl = request.POST.get('videourl')
+    peoplelimit = request.POST.get('peoplelimit')
+    timelimit = request.POST.get('timelimit')
+    interval = request.POST.get('interval')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    if len(device_id_list) > 0:
+        # 发布任务
+        for i in range(len(device_id_list)):
+            id = device_id_list[i]
+            device = MobilePhone.objects.get(id=id)
+            if device is not None:
+                task = ScanMission()
+                task.MobilePhone = device
+                task.Status = TaskStatus[0][0]
+                task.Owner = request.user
+                task.VideoURL = videourl
+                task.Title = title
+                task.PeopleLimit = peoplelimit
+                task.TimeLimit = timelimit
+                task.Interval = interval
+                if starttime != '' and endtime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                elif starttime != '':
+                    task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                elif endtime != '':
+                    task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+                    task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+                else:
+                    task.StartTime = datetime.datetime.now()
+                    task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+                task.Priority = 0
+                task.save()
+            else:
+                return HttpResponse('Error')
+        return HttpResponse(reverse('Web:PublishScanMission'))
+    else:
+        return HttpResponse('Error')
+
+
+@login_required
+def editscanmission(request):
+    data_id = request.POST.get('id')
+    title = request.POST.get('title')
+    videourl = request.POST.get('videourl')
+    peoplelimit = request.POST.get('peoplelimit')
+    timelimit = request.POST.get('timelimit')
+    interval = request.POST.get('interval')
+    starttime = request.POST.get('starttime')
+    endtime = request.POST.get('endtime')
+    task = ScanMission.objects.get(id=data_id)
+    task.Title = title
+    task.VideoURL = videourl
+    task.PeopleLimit = peoplelimit
+    task.TimeLimit = timelimit
+    task.Interval = interval
+    if starttime != '' and endtime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+    elif starttime != '':
+        task.StartTime = datetime.datetime.strptime(starttime, '%Y-%m-%d %H:%M:%S')
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    elif endtime != '':
+        task.EndTime = datetime.datetime.strptime(endtime, '%Y-%m-%d %H:%M:%S')
+        task.StartTime = task.EndTime - datetime.timedelta(hours=1)
+    else:
+        task.StartTime = datetime.datetime.now()
+        task.EndTime = task.StartTime + datetime.timedelta(hours=1)
+    task.save()
+    return HttpResponse(reverse('Web:PublishScanMission'))
+
+
+@login_required
+def getscanmissionbyid(request):
+    data_id = request.POST.get('id')
+    data = ScanMission.objects.get(id=data_id)
+    if data is not None:
+        context = {
+            'mobilephoneid': data.MobilePhone.id,
+            'status': data.Status,
+            'videourl': data.VideoURL,
+            'title': data.Title,
+            'peoplelimit': data.PeopleLimit,
+            'timelimit': data.TimeLimit,
+            'interval': data.Interval,
+            'dataid': data.id,
+            'starttime': data.StartTime,
+            'endtime': data.EndTime,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 刷粉任务
+
+# begin 评论库
+@login_required
+def commentlibrary(request):
+    data_url = request.build_absolute_uri(
+        reverse('Web:GetCommentLibrary'))
+    create_url = request.build_absolute_uri(
+        reverse('Web:CreateCommentLibrary'))
+    delete_url = request.build_absolute_uri(
+        reverse('Web:DeleteCommentLibrary'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetCommentLibraryByID'))
+    edit_url = request.build_absolute_uri(
+        reverse('Web:EditCommentLibrary'))
+    location = copy.deepcopy(location_init)
+    location['IsCommentLibraryPage'] = True
+    location['IsMissionMenu'] = True
+    location['IsMutualBrushMissionSubMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'create_url': create_url,
+               'delete_url': delete_url, 'get_by_id_url': get_by_id_url, 'edit_url': edit_url}
+    return render(request, 'pages/CommentLibrary.html', context)
+
+
+@login_required
+def getcommentlibrary(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get(
+        'query[generalCommentLibrarySearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = CommentLibrary.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Text__contains=generalSearch)
+
+    fields_list = CommentLibrary._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'Text', 'CreateTime')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def delete_commentlibrary_by_ids(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        CommentLibrary.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:CommentLibrary'))
+
+
+@login_required
+def createcommentlibrary(request):
+    text = request.POST.get('text')
+    commentlibrary = CommentLibrary()
+    commentlibrary.Text = text
+    commentlibrary.save()
+    return HttpResponse(reverse('Web:CommentLibrary'))
+
+
+@login_required
+def editcommentlibrary(request):
+    data_id = request.POST.get('id')
+    text = request.POST.get('text')
+    commentlibrary = CommentLibrary.objects.get(id=data_id)
+    commentlibrary.save()
+    return HttpResponse(reverse('Web:CommentLibrary'))
+
+
+@login_required
+def getcommentlibrarybyid(request):
+    commentlibrary_id = request.POST.get('id')
+    commentlibrary = CommentLibrary.objects.get(id=commentlibrary_id)
+    if commentlibrary is not None:
+        context = {
+            'text': commentlibrary.Text,
+            'dataid': commentlibrary.id,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 评论库
+
+# begin 代理审核
+
+
+@login_required
+def agentverify(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetAgentVerify'))
+    pass_url = request.build_absolute_uri(reverse('Web:PassAgentVerify'))
+    not_pass_url = request.build_absolute_uri(
+        reverse('Web:NotPassAgentVerify'))
+    location = copy.deepcopy(location_init)
+    location['IsAgentVerifyPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location, 'data_url': data_url, 'pass_url': pass_url,
+               'not_pass_url': not_pass_url}
+    return render(request, 'pages/AgentVerify.html', context)
+
+
+@login_required
+def getagentverify(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalAgentVerifySearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    my_filter = Q()
+    my_filter = my_filter & Q(is_pass=False)
+    my_filter = my_filter & Q(is_superuser=False)
+
+    data_list = User.objects.filter(my_filter)
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(username__contains=generalSearch)
+
+    fields_list = User._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values(
+        'id', 'username', 'leader__username', 'date_joined')
+    data = []
+    for i in range(len(data_result)):
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def passagentverify(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        User.objects.filter(id__in=id_list).update(is_pass=True)
+    for i in range(len(id_list)):
+        agent = Agent()
+        id = id_list[i]
+        user = User.objects.get(id=id)
+        agent.Subscriber = user
+
+        # 顶级
+        usersystem = user.leader
+        while usersystem.leader is not None:
+            usersystem = usersystem.leader
+        agent.UserSystem = usersystem
+
+        # 上级
+        alevel = user.leader
+        if (alevel.id != usersystem.id):
+            agent.UserALevel = alevel
+
+        # 上上级
+        blevel = alevel.leader
+        if (blevel is not None and blevel.id != usersystem.id):
+            agent.UserBLevel = blevel
+        agent.save()
+    return HttpResponseRedirect(reverse('Web:AgentVerify'))
+
+
+@login_required
+def notpassagentverify(request):
+    ids = request.POST.get('ids')
+    id_list = ids[:-1].split(',')
+    if len(ids) > 0:
+        User.objects.filter(id__in=id_list).delete()
+    return HttpResponseRedirect(reverse('Web:AgentVerify'))
+
+# end 代理审核
+
+# begin 代理列表
+@login_required
+def agentlist(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetAgentList'))
+    get_by_id_url = request.build_absolute_uri(
+        reverse('Web:GetAgentListByID'))
+    edit_url = request.build_absolute_uri(reverse('Web:EditAgentList'))
+    device_data_url = request.build_absolute_uri(reverse('Web:GetDevice'))
+    getdevicenamebyids_url = request.build_absolute_uri(
+        reverse('Web:GetDeviceNameByIDs'))
+    location = copy.deepcopy(location_init)
+    location['IsAgentListPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location, 'data_url': data_url,
+               'get_by_id_url': get_by_id_url, 'edit_url': edit_url,
+               'device_data_url': device_data_url, "getdevicenamebyids_url": getdevicenamebyids_url}
+    return render(request, 'pages/AgentList.html', context)
+
+
+@login_required
+def getagentlist(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalAgentSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = Agent.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(
+            Subscriber__username__contains=generalSearch)
+
+    fields_list = Agent._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Subscriber__username', 'UserALevel__username',
+                                                 'UserBLevel__username', 'UserSystemPercent',
+                                                 'UserALevelPercent', 'UserBLevelPercent', 'UserSystem__username')
+    data = []
+    for i in range(len(data_result)):
+        agent_id = data_result[i]['id']
+        agent = Agent.objects.get(id=agent_id)
+        mobile = agent.mobilephone_set.all()
+        mobilephoneid = ''
+        if (mobile.count() > 0):
+            for j in range(mobile.count()):
+                per = mobile[j]
+                mobilephoneid = mobilephoneid + str(per.id) + ','
+        data_result[i]['mobilephoneid'] = mobilephoneid[:-1]
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+@login_required
+def editagentlist(request):
+    data_id = request.POST.get('id')
+    UserSystemPercent = request.POST.get('UserSystemPercent')
+    UserALevelPercent = request.POST.get('UserALevelPercent')
+    UserBLevelPercent = request.POST.get('UserBLevelPercent')
+    deviceid = request.POST.get('deviceid')
+    agent = Agent.objects.get(id=data_id)
+    agent.UserSystemPercent = UserSystemPercent
+    agent.UserALevelPercent = UserALevelPercent
+    agent.UserBLevelPercent = UserBLevelPercent
+    agent.mobilephone_set.clear()
+    device_list = deviceid.split(',')
+    if (len(device_list) > 0):
+        for i in range(len(device_list)):
+            device_id = device_list[i]
+            device = MobilePhone.objects.get(id=device_id)
+            device.Agent = agent
+            device.save()
+    agent.save()
+    return HttpResponse(reverse('Web:AgentList'))
+
+
+@login_required
+def getagentlistbyid(request):
+    data_id = request.POST.get('id')
+    data = Agent.objects.get(id=data_id)
+    mobilephoneid = ""
+    if data is not None:
+        mobile = data.mobilephone_set.all()
+        if (mobile.count() > 0):
+            for i in range(mobile.count()):
+                per = mobile[i]
+                mobilephoneid = mobilephoneid + str(per.id) + ','
+        context = {
+            'mobilephoneid': mobilephoneid[:-1],
+            'username': data.Subscriber.username,
+            'alevelusername': '' if(data.UserALevel == None) else data.UserALevel.username,
+            'blevelusername': '' if(data.UserBLevel == None) else data.UserBLevel.username,
+            'usersystempercent': data.UserSystemPercent,
+            'useralevelpercent': data.UserALevelPercent,
+            'userblevelpercent': data.UserBLevelPercent,
+            'usersystemusername': '' if(data.UserSystem == None) else data.UserSystem.username,
+            'dataid': data.id,
+        }
+        return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                            content_type="application/json,charset=utf-8")
+    else:
+        return HttpResponse('Error')
+
+# end 代理列表
+
+# begin 订单管理
+@login_required
+def order(request):
+    data_url = request.build_absolute_uri(reverse('Web:GetOrder'))
+    location = copy.deepcopy(location_init)
+    location['IsOrderPage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location, 'data_url': data_url}
+    return render(request, 'pages/Order.html', context)
+
+
+@login_required
+def getorder(request):
+    page = request.POST.get('pagination[page]')
+    pages = request.POST.get('pagination[pages]')
+    perpage = request.POST.get('pagination[perpage]')
+    generalSearch = request.POST.get('query[generalOrderSearch]')
+    field = request.POST.get('sort[field]')
+    sort = request.POST.get('sort[sort]')
+
+    data_list = Order.objects.all()
+
+    if generalSearch is not None and generalSearch != '':
+        data_list = data_list.filter(Item_Title__contains=generalSearch)
+
+    fields_list = Order._meta.fields
+    field_name_list = [f.name for f in fields_list]
+    if field is not None and field != '' and field in field_name_list:
+        if sort == 'desc':
+            field = '-' + field
+        data_list = data_list.order_by(field)
+
+    paginator = Paginator(data_list, perpage)
+    context = {}
+    meta = {
+        'page': page,
+        'pages': pages,
+        'perpage': perpage,
+        "total": paginator.count,
+        "sort": sort,
+        "field": field
+    }
+
+    try:
+        page_result = paginator.page(page)
+    except PageNotAnInteger:
+        page_result = paginator.page(1)
+    except EmptyPage:
+        page_result = paginator.page(paginator.num_pages)
+
+    data_result = page_result.object_list.values('id', 'Item_Img', 'Item_Title',
+                                                 'Total_Commission_Rate', 'Total_Commission_Fee',
+                                                 'Trade_Parent_ID', 'Order_Type', 'TK_Earning_Time',
+                                                 'TK_Status', 'ADZone_ID')
+    data = []
+    for i in range(len(data_result)):
+        pid = data_result[i]['ADZone_ID']
+        aliconfig = ALIConfig.objects.get(LASTPID=pid)
+        agentName = ''
+        if aliconfig is not None:
+            mobile = MobilePhone.objects.get(ALIConfig=aliconfig)
+            if mobile is not None and mobile.Agent is not None:
+                agentName = mobile.Agent.Subscriber.username
+        data_result[i]['AgentName'] = agentName
+        data.append(data_result[i])
+    context['meta'] = meta
+    context['data'] = data
+    return HttpResponse(json.dumps(context, ensure_ascii=False, cls=Encoder),
+                        content_type="application/json,charset=utf-8")
+
+
+# end 订单管理
+
+@login_required
+def cashmanage(request):
+    location = copy.deepcopy(location_init)
+    location['IsCashManagePage'] = True
+    location['IsMyAgentMenu'] = True
+    context = {'location': location}
+    return render(request, 'pages/CashManage.html', context)

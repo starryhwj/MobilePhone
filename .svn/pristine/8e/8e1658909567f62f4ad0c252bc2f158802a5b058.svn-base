@@ -1,0 +1,71 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 视频数据分析{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    视频数据分析
+                </h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--all" id="workstime">
+                    <label>视频统计日期:</label> &nbsp &nbsp
+                    <button type="button" name='workstimeBtn' value="0" class="btn btn-primary btn-sm">全部</button>
+                    <button type="button" name='workstimeBtn' value="1"
+                        class="btn btn-outline-hover-primary btn-sm">今天</button>
+                    <button type="button" name='workstimeBtn' value="2"
+                        class="btn btn-outline-hover-primary btn-sm">昨天</button>
+                    <button type="button" name='workstimeBtn' value="3"
+                        class="btn btn-outline-hover-primary btn-sm">本月</button>
+                    <button type="button" name='workstimeBtn' value="4"
+                        class="btn btn-outline-hover-primary btn-sm">上月</button>
+                    <button type="button" name='workstimeBtn' value="5"
+                        class="btn btn-outline-hover-primary btn-sm">上上月</button>
+                </div>
+            </div>
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入.."
+                                        id="generalWorksDataAnalysisSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_works_data_analysis"></div>
+
+            <!--end: Datatable -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/DataAnalysis/WorksDataAnalysis.js' %}" type="text/javascript"></script>
+{% endblock js %}

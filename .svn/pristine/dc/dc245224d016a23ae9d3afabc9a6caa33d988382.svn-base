@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 发布晒单{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}发布晒单{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

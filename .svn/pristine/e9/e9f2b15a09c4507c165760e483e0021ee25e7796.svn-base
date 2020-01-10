@@ -1,0 +1,352 @@
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.http import HttpRequest
+from django.contrib.auth import login, authenticate
+from .views import *
+from .models import *
+from Users.models import User
+from django.db import connection
+import os
+import json
+import datetime
+
+
+class SuperUserUnitTest(TestCase):
+
+    # begin 初始化测试数据
+    @classmethod
+    def setUpTestData(cls):
+        # 所有test运行前运行一次
+        cls.init_store_procedure()
+        cls.client = Client()
+        cls.datatable_param = {
+            'pagination[page]': 1,
+            'pagination[pages]': 10,
+            'pagination[perpage]': 10,
+        }
+
+        # begin User 测试用例
+        cls.super_user_username = 'superUser'
+        cls.super_user_password = '123456'
+        cls.super_user = User.objects.create_superuser(username=cls.super_user_username, email='', password=cls.super_user_password)
+        cls.blevel_user_username = 'bLevel'
+        cls.blevel_user_password = '123456'
+        cls.blevel_user = User.objects.create_user(username=cls.blevel_user_username, email='', password=cls.blevel_user_password)
+        # end User 测试用例
+
+        # begin SystemConfig 测试用例
+        SystemConfig.objects.create(Name='心跳存活判断秒数', Value=300)
+        SystemConfig.objects.create(Name='刷粉人数上限默认值', Value=100)
+        SystemConfig.objects.create(Name='关注人数上限默认值', Value=100)                
+        # end SystemConfig 测试用例
+
+        # begin MaintenanceNumberMissionKeywordClassification 测试用例
+        tag = MaintenanceNumberMissionKeywordClassification.objects.create(Name='测试')
+        # begin MaintenanceNumberMissionKeywordClassification 测试用例    
+         
+        # begin TikTokAccountGroup 测试用例
+        group = TikTokAccountGroup.objects.create(Name='测试')
+        # end TikTokAccountGroup 测试用例
+
+        # begin Agent 测试用例
+        cls.blevel_agent = Agent.objects.create(Subscriber=cls.blevel_user, UserSystem=cls.super_user)
+        # end Agent 测试用例
+
+        # begin TikTokAccount 测试用例
+        cls.no_showWindowExists_TikTokAccount = TikTokAccount.objects.create(NickName='noShowWindowExists', Group=group)
+        cls.no_showWindowExists_TikTokAccount.Classification.add(tag)
+        cls.has_showWindowExists_TikTokAccount = TikTokAccount.objects.create(NickName='hasShowWindowExists', ShowWindowExists=True)        
+        # end TikTokAccount 测试用例
+
+        # begin MobilePhone测试用例
+        MobilePhone.objects.create(IMEI='noAgentnoCommodity', SysID='noAgentnoCommodity', Remark='noAgentnoCommodity', Enable=True, HeartBeat=datetime.datetime.now())
+        MobilePhone.objects.create(IMEI='bLevel', SysID='bLevel', Agent=cls.blevel_agent, TikTokAccount=cls.no_showWindowExists_TikTokAccount)
+        MobilePhone.objects.create(IMEI='hasCommodity', SysID='hasCommodity', TikTokAccount=cls.has_showWindowExists_TikTokAccount)        
+        # end MobilePhone测试用例
+
+    def init_store_procedure():
+        with open('D:\\Work\MobilePhone\\unittest vanilla data\\20191207-计算代理收入-CalcAgentIncome.sql', 'r') as file_obj:
+            contents = file_obj.read()
+            with connection.cursor() as cursor:
+                cursor.execute(contents.rstrip())    
+
+    # end 初始化测试数据
+
+    # begin 淘宝验证
+    def test_taobaoverify(self):
+        response = self.client.post(reverse('Web:taobaoverify'))
+        self.assertEqual(response.content, b'f00c25378e73a2bbb92a9a1859fb7f05')
+    # end 淘宝验证
+
+    # begin 账户总览
+    def test_index_superuser(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        response = self.client.post(reverse('Web:index'))
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        self.assertTemplateUsed(response, 'pages/index.html')  # 判断渲染的模板是否正确
+
+    def test_index_agent(self):
+        self.client.login(username=self.blevel_user_username, password=self.blevel_user_password)
+        response = self.client.post(reverse('Web:index'))
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        self.assertTemplateUsed(response, 'pages/Agent/AgentIndex.html')  # 判断渲染的模板是否正确        
+    # end 账户总览
+
+    # begin 设备管理
+    def test_devicemanage(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        response = self.client.post(reverse('Web:DeviceManage'))
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        self.assertTemplateUsed(response, 'pages/DeviceManage.html')  # 判断渲染的模板是否正确
+
+    def test_getdevice_isagent_is_none_and_iscommodity_is_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()           
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 3) # 判断数据条数
+
+    def test_getdevice_isagent_is_not_none_and_iscommodity_is_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()            
+        param.update({
+            'isagent': 'True'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 2) # 判断数据条数       
+
+    def test_getdevice_isagent_is_none_and_iscommodity_is_not_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()        
+        param.update({
+            'iscommodity': 'True'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数              
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_remark(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': 'Agent',
+            'query[devicecolumn]': 'remark'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数      
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_tiktok(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': 'has',
+            'query[devicecolumn]': 'tiktok'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数          
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_agent(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': 'b',
+            'query[devicecolumn]': 'agent'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数   
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_id_digit(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': '1',
+            'query[devicecolumn]': 'id'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数     
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_id_str(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': 'a',
+            'query[devicecolumn]': 'id'
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 3) # 判断数据条数           
+
+    def test_getdevice_generalSearch_and_devicecolumn_is_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[generalDeviceSearch]': 'has',
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数                      
+    
+    def test_getdevice_status_is_true(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[device_status]': True,
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数                 
+
+    def test_getdevice_status_is_false(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[device_status]': False,
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 2) # 判断数据条数    
+
+    def test_getdevice_isonline_is_true(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[isonline]': True,
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数    
+
+    def test_getdevice_isonline_is_false(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[isonline]': False,
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 2) # 判断数据条数                              
+    
+    def test_getdevice_tag_is_int(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[tag]': '1,',
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数   
+
+    def test_getdevice_tag_is_none_type(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[tag]': '-1,',
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 2) # 判断数据条数        
+
+    def test_getdevice_group_is_int(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[group]': '1,',
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 1) # 判断数据条数   
+
+    def test_getdevice_group_is_none_type(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'query[group]': '-1,',
+        })
+        response = self.client.post(reverse('Web:GetDevice'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['data']
+        self.assertEqual(len(data_list), 2) # 判断数据条数                 
+    
+    def test_getdevicenamebyids_ids_is_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'ids': '',
+        })
+        response = self.client.post(reverse('Web:GetDeviceNameByIDs'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['ids']
+        self.assertEqual(data_list, '') # 判断数据条数      
+
+    def test_getdevicenamebyids_ids_is_not_none(self):
+        self.client.login(username=self.super_user_username, password=self.super_user_password)
+        param = self.datatable_param.copy()
+        param.update({
+            'ids': '1,',
+        })
+        response = self.client.post(reverse('Web:GetDeviceNameByIDs'), data=param)
+        self.assertEqual(response.status_code, 200)  # 判断状态码
+        response_str = str(response.content,'utf-8')
+        response_json = json.loads(response_str)
+        data_list = response_json['ids']
+        self.assertEqual(data_list, '1') # 判断数据条数            
+    
+    
+    # end 设备管理

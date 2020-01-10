@@ -1,0 +1,167 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 账户总览{% endblock title %}
+{% block css %}
+<!--begin::Page Custom Styles(used by this page) -->
+<link href="{% static 'css/pages/pricing/pricing-v1.css' %}" rel="stylesheet" type="text/css" />
+<!--end::Page Custom Styles -->
+{% endblock css %}
+{% block subheader %}账户总览{% endblock subheader %}
+{% block content %}
+<!-- begin:: Content -->
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="row row-no-padding">
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title">
+                                        账号
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price" style="font-size:30px">
+                                    {{ user.username }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title">
+                                        邀请码
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price" id="id_invite_code" name="invite_code"
+                                    style="font-size:30px">
+                                    {{ user.invite_code }}
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button"
+                                        class="btn btn-primary btn-pill btn-widest btn-taller btn-bold"
+                                        id="id_copy_invite_code" name="copy_invite_code">复制</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title">
+                                        代理注册网址
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price" id="id_web" name="web" style="font-size:16px">
+                                    {{ agenturl }}
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button"
+                                        class="btn btn-primary btn-pill btn-widest btn-taller btn-bold" id="id_copy_web"
+                                        name="copy_web">复制</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="kt-pricing-v1 kt-pricing-v1--last">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title" id="id_qr_code" name="qr_code">
+                                        代理注册二维码
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <a href="#" class="kt-media kt-media--xxl">
+                                    <img src="{{ qrcodeurl }}" alt="image">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if user.is_superuser %}
+            <div class="kt-portlet">
+                <div class="row row-no-padding">
+                    <div class="col-lg-12 col-xl-3">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title">
+                                        淘宝授权剩余天数
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price" id="id_outh_date" name="outh_date"
+                                    style="font-size:30px">
+                                    {{ outh_day }}
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button"
+                                        class="btn btn-primary btn-pill btn-widest btn-taller btn-bold"
+                                        id="id_taobao_outh" name="taobao_outh" onclick="TaoBaoOuth()">重新授权</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <!--end::Portlet-->
+        </div>
+    </div>
+
+    <!-- begin: Modal -->
+    <div class="modal fade" id="copyinvitecodeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    成功复制邀请码！
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="copywebModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    成功复制代理注册网址！
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end: Modal -->
+
+    <!--begin: HideData-->
+    <div class="btn btn-clean kt-hidden" id="taobaoouthurl">{{ taobaoouthurl }}</div>
+    <!--end: HideData-->
+
+</div>
+<!-- end:: Content -->
+{% endblock content %}
+{% block js %}
+<script src="{% static 'js/pages/custom/Others/index.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/Others/clipboard.min.js' %}" type="text/javascript"></script>
+{% endblock js %}

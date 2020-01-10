@@ -1,0 +1,11 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 视频数据分析{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}视频数据分析{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+
+{% block js %}
+{% endblock js %}

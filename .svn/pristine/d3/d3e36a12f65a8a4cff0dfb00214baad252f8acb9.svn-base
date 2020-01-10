@@ -1,0 +1,449 @@
+"use strict";
+// Class definition
+
+var KTDatatableRecordSelectionDemo = function() {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                          first: '首页',
+                          prev: '前一页',
+                          next: '下一页',
+                          last: '尾页',
+                          more: '更多',
+                          input: '请输入页码',
+                          select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: '#',
+            sortable: false,
+            autoHide: false,
+            width: 20,
+            selector: {
+                class: 'kt-checkbox--solid'
+            },
+            textAlign: 'center',
+        }, {
+            field: 'pic1',
+            title: '缩略图',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+              return '\
+                    <a class="kt-media kt-media--xl">\
+					    <img src= "' + row.Pic1 + '" alt="image">\
+					</a>\
+                ';
+            }
+        }, {
+            field: 'Title',
+            title: '标题',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'CategoryString',
+            title: '类型',
+            autoHide: false,
+            sortable: false,
+            template: function(row) {
+                var cat = row.CategoryString
+                var cat_list = cat.split(',')
+                if (cat_list != null && cat_list.length > 0) {
+                    var html_string = ''
+                    for (var i = 0; i < cat_list.length; i++) {
+                        var per = cat_list[i]
+                        html_string = html_string + ' ' +
+                        '<span class="badge badge-primary">' + per +
+                        '</span>';
+                    }
+                    return html_string
+                } else {
+                    return ''
+                };
+            },
+        },{
+            field: 'CreateTime',
+            title: '创建日期',
+            type: 'date',
+            format: 'MM/DD/YYYY',
+        }, {
+            field: 'OutSidePlatformID',
+            title: '外部平台ID',
+            sortable: false,
+        }, {
+            field: 'Price',
+            title: '售价',
+	        autoHide: false,
+        }, {
+            field: 'Sales',
+            title: '销量',
+	        autoHide: false,
+        },{
+            field: 'CommissionPercent',
+            title: '提成比例',
+            autoHide: false,
+        },{
+            field: 'OutSidePlatformURL',
+            title: '外部平台URL',
+            sortable: false,
+        },{
+            field: 'Actions',
+            title: '操作',
+            sortable: false,
+            width: 110,
+            overflow: 'visible',
+	        autoHide: false,
+	        textAlign: 'center',
+            template: function(row) {
+	            return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="详情" data-edit-id="' + row.id + '">\
+                        <i class="flaticon2-file"></i>\
+                    </button>\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="删除" data-delete-id="' + row.id + '">\
+                        <i class="flaticon2-delete"></i>\
+                    </button>\
+                ';
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function() {
+
+        options.search = {
+            input: $('#generalCommoditySearch'),
+        };
+
+        var datatable = $('#local_record_selection').KTDatatable(options);
+
+        $('#kt_form_type').on('change', function() {
+            datatable.search($(this).val().toLowerCase(), 'commodityType');
+        });
+
+        $('#kt_form_type').selectpicker();
+
+        $('#kt_datatable_delete_all').on('click', function() {
+            swal.fire({
+                title: '确认删除?',
+                text: "确认后无法撤销！",
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '是',
+                cancelButtonText: '否'
+            }).then(function(result) {
+                if (result.value) {
+                    // select active rows
+                    datatable.rows('.kt-datatable__row--active');
+                    // check selected nodes
+                    if (datatable.nodes().length > 0) {
+                        // get column by field name and get the column nodes
+                        var ids = datatable.rows('.kt-datatable__row--active').
+                        nodes().
+                        find('.kt-checkbox--single > [type="checkbox"]').
+                        map(function(i, chk) {
+                            return $(chk).val();
+                        });
+                        var idstring = '';
+                        for (var i = 0; i < ids.length; i++) {
+                            idstring = idstring + ids[i] + ','
+                         }
+                        $.ajax({
+                            type: "POST",
+                            url: $("#delete_url").text(),
+                            data: {
+                                csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                                ids: idstring
+                            },
+                            success: function (response, status, xhr, $form) {
+                                datatable.reload()
+                            }
+                        });
+                     }
+                };
+             })
+		});
+
+		datatable.on('click', '[data-delete-id]', function(row) {
+		    var id = $(this).data('delete-id');
+		    swal.fire({
+                title: '确认删除?',
+                text: "确认后无法撤销！",
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '是',
+                cancelButtonText: '否'
+            }).then(function(result) {
+                if (result.value) {
+                    var idstring = id + ','
+                    $.ajax({
+                        type: "POST",
+                        url: $("#delete_url").text(),
+                        data: {
+                            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                            ids: idstring
+                        },
+                        success: function (response, status, xhr, $form) {
+                            datatable.reload()
+                        }
+                    });
+                };
+             })
+		});
+
+		datatable.on('click', '[data-edit-id]', function() {
+            var id = $(this).data('edit-id');
+            initeditmodal();
+            $.ajax({
+                type: "POST",
+                url: $("#get_by_id_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#editModal').modal('show');
+                        document.getElementById("id_edit_pic1").src=response['pic1'];
+                        document.getElementById("id_edit_pic2").src=(response['pic2'] == null ? '' : response['pic2']);
+                        document.getElementById("id_edit_pic3").src=(response['pic3'] == null ? '' : response['pic3']);
+                        document.getElementById("id_edit_pic4").src=(response['pic4'] == null ? '' : response['pic4']);
+                        document.getElementById("id_edit_pic5").src=(response['pic5'] == null ? '' : response['pic5']);
+                        document.getElementById("id_edit_url").value=response['url'];
+                        document.getElementById("id_edit_title").value=response['title'];
+                        document.getElementById("id_edit_price").value=response['price'];
+                        document.getElementById("id_edit_sales").value=response['sales'];
+                        document.getElementById("id_edit_commissionpercent").value=response['commissionpercent'];
+                        document.getElementById("id_edit_outsideplatformid").value=response['outsideplatformid'];
+                        document.getElementById("id_data_id").value=response['dataid'];
+                        var categoryId = response['categoryid'];
+                        var categoryIdList = categoryId.split(',')
+                        var select = document.getElementById('id_edit_category');
+                        for (var i = 0; i < categoryIdList.length; i++) {
+                            var checkValue = categoryIdList[i]
+                            for (var j = 0; j < select.options.length; j++){
+                                if (select.options[j].value == checkValue){
+                                select.options[j].selected = true;
+                                break;
+                                }
+                            }
+                        }
+                        $('#id_edit_category').select2({
+                            placeholder: "选择类别",
+                        });
+                        $('.select2-container').width('100%');
+                    }
+				}
+            });
+		});
+
+        datatable.on(
+            'kt-datatable--on-check kt-datatable--on-uncheck kt-datatable--on-layout-updated',
+            function(e) {
+                var checkedNodes = datatable.rows('.kt-datatable__row--active').nodes();
+                var count = checkedNodes.length;
+                $('#kt_datatable_selected_number').html(count);
+                if (count > 0) {
+                    $('#kt_datatable_group_action_form').collapse('show');
+                } else {
+                    $('#kt_datatable_group_action_form').collapse('hide');
+                }
+            });
+
+        $('#kt_modal_fetch_id').on('show.bs.modal', function(e) {
+            var ids = datatable.rows('.kt-datatable__row--active').
+            nodes().
+            find('.kt-checkbox--single > [type="checkbox"]').
+            map(function(i, chk) {
+                return $(chk).val();
+            });
+            var c = document.createDocumentFragment();
+            for (var i = 0; i < ids.length; i++) {
+                var li = document.createElement('li');
+                li.setAttribute('data-id', ids[i]);
+                li.innerHTML = 'Selected record ID: ' + ids[i];
+                c.appendChild(li);
+            }
+            $(e.target).find('.kt_datatable_selected_ids').append(c);
+        }).on('hide.bs.modal', function(e) {
+            $(e.target).find('.kt_datatable_selected_ids').empty();
+        });
+    };
+
+    return {
+        // public functions
+        init: function() {
+            localSelectorDemo();
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+    KTDatatableRecordSelectionDemo.init();
+    $('#id_category').select2({
+        placeholder: "选择类别",
+    });
+    $('#id_edit_category').select2({
+        placeholder: "选择类别",
+    });
+    $('.select2-container').width('100%');
+});
+
+var GetTaoBaoCommodity = function() {
+    var url = $("#id_url").val()
+    $.ajax({
+        type: "POST",
+        url: $("#gettaobaocommodity_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            url: url
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                $('#pic_box').collapse('show');
+                document.getElementById("id_pic1").src=response['pic1'];
+                document.getElementById("id_pic2").src=response['pic2'];
+                document.getElementById("id_pic3").src=response['pic3'];
+                document.getElementById("id_pic4").src=response['pic4'];
+                document.getElementById("id_pic5").src=response['pic5'];
+                document.getElementById("id_title").value=response['title'];
+                document.getElementById("id_price").value=response['price'];
+                document.getElementById("id_outsideplatformid").value=response['outsideplatformid'];
+            }
+		}
+    })
+}
+
+var CreateCommodity = function() {
+    var category_list = $("#id_category").val()
+    var category_string = ''
+    for (var i=0;i<category_list.length;i++)
+    {
+        category_string = category_string + category_list[i] + ','
+    }
+    $.ajax({
+        type: "POST",
+        url: $("#create_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            pic1: document.getElementById("id_pic1").src,
+            pic2: document.getElementById("id_pic2").src,
+            pic3: document.getElementById("id_pic3").src,
+            pic4: document.getElementById("id_pic4").src,
+            pic5: document.getElementById("id_pic5").src,
+            title: document.getElementById("id_title").value,
+            price: document.getElementById("id_price").value,
+            outsideplatformid: document.getElementById("id_outsideplatformid").value,
+            sales: document.getElementById("id_sales").value,
+            commissionpercent: document.getElementById("id_commissionpercent").value,
+            url: document.getElementById("id_url").value,
+            category: category_string,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                 window.location.href = response;
+            }
+		}
+    })
+}
+
+var EditCommodity = function() {
+    var category_list = $("#id_edit_category").val()
+    var category_string = ''
+    for (var i=0;i<category_list.length;i++)
+    {
+        category_string = category_string + category_list[i] + ','
+    }
+    $.ajax({
+        type: "POST",
+        url: $("#edit_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            price: document.getElementById("id_edit_price").value,
+            sales: document.getElementById("id_edit_sales").value,
+            commissionpercent: document.getElementById("id_edit_commissionpercent").value,
+            id: document.getElementById("id_data_id").value,
+            category: category_string,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                 window.location.href = response;
+            }
+		}
+    })
+}
+
+var initmodal = function() {
+    document.getElementById("id_url").value = '';
+    $('#pic_box').collapse('hide');
+    document.getElementById("id_title").value = '';
+    document.getElementById("id_price").value = '0';
+     document.getElementById("id_sales").value = '0'
+    document.getElementById("id_outsideplatformid").value = '';
+    document.getElementById("id_commissionpercent").value = '0';
+    var select = document.getElementById('id_category');
+    for (var j = 0; j < select.options.length; j++){
+        select.options[j].selected = false;
+    }
+}
+
+var initeditmodal = function() {
+    document.getElementById("id_edit_url").value = '';
+    document.getElementById("id_edit_title").value = '';
+    document.getElementById("id_edit_price").value = '0';
+     document.getElementById("id_edit_sales").value = '0'
+    document.getElementById("id_edit_outsideplatformid").value = '';
+    document.getElementById("id_edit_commissionpercent").value = '0';
+    var select = document.getElementById('id_edit_category');
+    for (var j = 0; j < select.options.length; j++){
+        select.options[j].selected = false;
+    }
+}

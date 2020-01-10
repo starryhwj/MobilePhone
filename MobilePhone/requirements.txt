@@ -1,0 +1,7 @@
+Django==2.1.14
+Pillow==6.2.1
+pyodbc==4.0.27
+django-pyodbc-azure==2.1.0.0
+requests==2.22.0
+beautifulsoup4==4.8.1
+lxml==4.4.1

@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+# filename: Users/form.py
+from django.contrib.auth.forms import UserCreationForm
+from django.forms import PasswordInput
+from .models import User
+from django import forms
+
+
+class CustomUserCreationForm(UserCreationForm):
+
+    leadercode = forms.CharField(
+        label="邀请码"
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '用户名',
+                                                                'autocomplete': 'off'})
+        self.fields['password1'].widget = PasswordInput(attrs={'class': 'form-control',
+                                                               'placeholder': '输入密码',
+                                                               'autocomplete': 'off'})
+        self.fields['password2'].widget = PasswordInput(attrs={'class': 'form-control', 'placeholder': '请再次输入密码',
+                                                               'autocomplete': 'off'})
+        self.fields['leadercode'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入邀请码',
+                                                               'autocomplete': 'off'})
+
+                                                               

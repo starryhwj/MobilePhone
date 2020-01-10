@@ -1,0 +1,619 @@
+"use strict";
+// Class definition
+
+var KTDatatableRecordSelectionDemo = function () {
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 500, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            sortable: false,
+            autoHide: false,
+            width: 20,
+        }, {
+            field: 'username',
+            title: '名称',
+            autoHide: false,
+            sortable: true,
+        }, {
+            field: 'mobilephoneid',
+            title: '已分配设备',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.mobilephoneid == null) {
+                    return ''
+                } else {
+                    var mobilephoneid_list = row.mobilephoneid.split(',');
+                    var html = '';
+                    for (var i = 0; i < mobilephoneid_list.length; i++) {
+                        var per_id = mobilephoneid_list[i]
+                        html = html + '\
+                        <a href="javascript:void(0);" class="kt-link kt-font-bold kt-margin-t-5" \
+                        data-mobilephone-id=' + per_id + '>' + per_id + '</a> \
+                        ' + ','
+                    };
+                    html = html.substring(0, html.length - 1);
+                    return html
+                }
+            }
+        },{
+            field: 'Actions',
+            title: '操作',
+            sortable: false,
+            width: 110,
+            overflow: 'visible',
+            autoHide: false,
+            textAlign: 'center',
+            template: function (row) {
+                return '\
+                    <button class="btn btn-sm btn-clean btn-icon btn-icon-sm" title="分配手机" data-diliver-id="' + row.id + '">\
+                        <i class="flaticon2-schedule"></i>\
+                    </button>\
+                ';
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+
+        var datatable = $('#datatable_device_deliver').KTDatatable(options);
+
+        datatable.on('click', '[data-diliver-id]', function () {
+            var id = $(this).data('diliver-id');
+            initdevicemodal();
+            $.ajax({
+                type: "POST",
+                url: $("#getdevicebyuserid_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    id: id
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#editmissionModal').modal('show');
+                        document.getElementById("id_edit_mission_divice").value = response['mobilephoneid'];
+                        document.getElementById("id_edit_mission_data_id").value = response['dataid'];
+                    }
+                }
+            });
+        });
+
+        datatable.on('click', '[data-mobilephone-id]', function () {
+            var id = $(this).data('mobilephone-id');
+            localStorage.setItem('jumpToMobilePhone', id);
+            window.location.href = $("#devicemanage_url").text()
+        });
+    };
+
+    return {
+        // public functions
+        init: function () {
+            localSelectorDemo();
+        }
+    };
+}();
+
+var KTDatatableDevice = function () {
+
+    let isSearch = false
+    let searchStorage = {};
+
+    // Private functions
+    var options = {
+        // datasource definition
+        data: {
+            type: 'remote',
+            source: {
+                read: {
+                    url: $("#device_data_url").text(),
+                    params: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                        isuserdevicedeliver: true,
+                    }
+                },
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+        },
+        // layout definition
+        layout: {
+            theme: 'default', // datatable theme
+            class: '', // custom wrapper class
+            scroll: true, // enable/disable datatable scroll both horizontal and
+            // vertical when needed.
+            height: 1000, // datatable's body's fixed height
+            footer: false // display/hide footer
+        },
+
+        // column sorting
+        sortable: true,
+
+        pagination: true,
+
+        // Translate
+        translate: {
+            records: {
+                processing: '请等待...',
+                noRecords: '没有数据',
+            },
+            toolbar: {
+                pagination: {
+                    items: {
+                        default: {
+                            first: '首页',
+                            prev: '前一页',
+                            next: '下一页',
+                            last: '尾页',
+                            more: '更多',
+                            input: '请输入页码',
+                            select: '选择每页行数'
+                        },
+                        info: '第{{start}} - {{end}}行，共{{total}}行',
+                    },
+                },
+            },
+        },
+
+        // columns definition
+
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            sortable: false,
+            width: 20,
+            selector: {
+                class: 'kt-checkbox--solid'
+            },
+            textAlign: 'center',
+        }, {
+            field: 'id_show',
+            title: 'ID',
+            template: '{{id}}',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Enable',
+            title: '设备状态',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '启用',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '停用',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.Enable].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.Enable].title +
+                    '</span>';
+            },
+        }, {
+            field: 'IsOnline',
+            title: '在线信息',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '在线',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '离线',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                return '<span class="kt-badge ' + status[row.IsOnline].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.IsOnline].title +
+                    '</span>';
+            },
+        }, {
+            field: 'tag',
+            title: '标签',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                var cat = row.tag
+                var cat_list = cat.split(',')
+                if (cat_list != null && cat_list.length > 0) {
+                    var html_string = ''
+                    for (var i = 0; i < cat_list.length; i++) {
+                        var per = cat_list[i]
+                        html_string = html_string + ' ' +
+                            '<span class="badge badge-primary">' + per +
+                            '</span>';
+                    }
+                    return html_string
+                } else {
+                    return ''
+                };
+            }
+        }, {
+            field: 'TikTokAccount__Group__Name',
+            title: '分组',
+            autoHide: false,
+            sortable: false,
+            template: function (row) {
+                if (row.TikTokAccount__Group__Name == null) {
+                    return ''
+                } else {
+                    return '\
+                    <span class="badge badge-primary">' + row.TikTokAccount__Group__Name + '</span>';
+                }
+            }
+        }, {
+            field: 'Remark',
+            title: '备注',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'Agent__Subscriber__username',
+            title: '代理名称',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'TikTokAccount__NickName',
+            title: '抖音账号',
+            autoHide: false,
+            sortable: false,
+        }, {
+            field: 'TikTokAccount__ShowWindowExists',
+            title: '电商',
+            autoHide: false,
+            sortable: false,
+            width: 40,
+            template: function (row) {
+                var status = {
+                    'true': {
+                        'title': '是',
+                        'class': 'kt-badge--success'
+                    },
+                    'false': {
+                        'title': '否',
+                        'class': ' kt-badge--danger'
+                    },
+                };
+                if (row.TikTokAccount__ShowWindowExists == null) {
+                    return ''
+                } else {
+                    return '<span class="kt-badge ' + status[row.TikTokAccount__ShowWindowExists].class +
+                    ' kt-badge--inline kt-badge--pill">' + status[row.TikTokAccount__ShowWindowExists].title +
+                    '</span>';
+                }
+            },
+        }],
+    };
+
+    // basic demo
+    var localSelectorDemo = function () {
+        options.extensions = {
+            checkbox: {},
+        };
+
+        options.search = {
+            input: $('#generalDeviceSearch'),
+            onEnter: true,
+        };
+
+        $('#kt_device_column').on('change', function () {
+            datatable.search($(this).val().toLowerCase(), 'devicecolumn');
+        });
+
+        $('#kt_device_column').selectpicker();
+
+        var datatable = $('#modal_datatable_device_deliver').KTDatatable(options);
+
+        $('#kt_datatable_device_select_all').on('click', function () {
+            var ids = datatable.checkbox().getSelectedId();
+            var id_string = ''
+            for (var i = 0; i < ids.length; i++) {
+                id_string = id_string + ids[i] + ','
+            }
+            $.ajax({
+                type: "POST",
+                url: $("#getdevicenamebyids_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    ids: id_string
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        $('#diviceModal').modal('hide');
+                        document.getElementById("id_edit_mission_divice").value = response['ids'];
+                    }
+                }
+            });
+        });
+
+        datatable.on(
+            'kt-datatable--on-check kt-datatable--on-uncheck kt-datatable--on-layout-updated',
+            function (e) {
+                var ids = datatable.checkbox().getSelectedId();
+                var count = ids.length;
+                $('#kt_datatable_device_selected_number').html(count);
+            });
+
+        // fix datatable layout after modal shown
+        var modal = $('#diviceModal');
+        datatable.hide();
+        var alreadyReloaded = false;
+        var alreadyInitSelect = false;
+        modal.on('shown.bs.modal', function () {
+            if (!alreadyReloaded) {
+                var modalContent = $(this).find('.modal-content');
+                datatable.spinnerCallback(true, modalContent);
+
+                datatable.reload();
+
+                datatable.on('kt-datatable--on-layout-updated', function () {
+                    if (!alreadyInitSelect) {
+                        if (document.getElementById("id_edit_mission_divice").value != '') {
+                            var storage = {};
+                            storage['selectedRows'] = document.getElementById("id_edit_mission_divice").value.split(',')
+                            storage['unselectedRows'] = []
+                            localStorage.setItem('modal_datatable_device_deliver-1-checkbox', JSON.stringify(storage));
+                        }
+                        alreadyInitSelect = true;
+                    }
+                    if (isSearch) {
+                        var storage = {};
+                        storage['selectedRows'] = searchStorage['selectedRows']
+                        storage['unselectedRows'] = searchStorage['unselectedRows']
+                        localStorage.setItem('modal_datatable_device_deliver-1-checkbox', JSON.stringify(storage));
+                        isSearch = false;
+                    }
+                    datatable.show();
+                    datatable.spinnerCallback(false, modalContent);
+                    datatable.redraw();
+                });
+
+                alreadyReloaded = true;
+            }
+        });
+
+    };
+
+    var initSearch = function () {
+        //状态
+        $("[name='statusBtn']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                $("[name='statusBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                getStatusSearch()
+            }
+        })
+        //是否在线
+        $("[name='isonlineBtn']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                $("[name='isonlineBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                getIsonlineSearch()
+            }
+        })
+        //标签
+        $("[name='tagBtn']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                var count = $("[name='tagBtn']").length
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                $("[name='tagBtnAll']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                if ($("#tag .btn-primary").length == count) {
+                    $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                    $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                }
+                getTagSearch()
+            } else if ($(this).hasClass('btn-primary')) {
+                $(this).removeClass('btn-primary')
+                $(this).addClass('btn-outline-hover-primary')
+                if ($("#tag .btn-primary").length == 0) {
+                    $("[name='tagBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                }
+                getTagSearch()
+            }
+        })
+        $("[name='tagBtnAll']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                $("[name='tagBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                getTagSearch()
+            }
+        })
+        //分组
+        $("[name='groupBtn']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                var count = $("[name='groupBtn']").length
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                $("[name='groupBtnAll']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                if ($("#group .btn-primary").length == count) {
+                    $("[name='groupBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                    $("[name='groupBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                }
+                getGroupSearch()
+            } else if ($(this).hasClass('btn-primary')) {
+                $(this).removeClass('btn-primary')
+                $(this).addClass('btn-outline-hover-primary')
+                if ($("#group .btn-primary").length == 0) {
+                    $("[name='groupBtnAll']").removeClass('btn-outline-hover-primary').addClass('btn-primary')
+                }
+                getGroupSearch()
+            }
+        })
+        $("[name='groupBtnAll']").click(function () {
+            if ($(this).hasClass('btn-outline-hover-primary')) {
+                $(this).removeClass('btn-outline-hover-primary')
+                $(this).addClass('btn-primary')
+                $("[name='groupBtn']").removeClass('btn-primary').addClass('btn-outline-hover-primary')
+                getGroupSearch()
+            }
+        })
+    }
+
+    var getStatusSearch = function () {
+        var statusSearch = $("#status .btn-primary")[0].value
+        search('device_status', statusSearch)
+    }
+
+    var getIsonlineSearch = function () {
+        var isonlineSearch = $("#isonline .btn-primary")[0].value
+        search('isonline', isonlineSearch)
+    }
+
+    var getTagSearch = function () {
+        var tagSearch = ''
+        if ($("[name='tagBtnAll']").hasClass('btn-primary')) {
+            tagSearch = ''
+        } else {
+            var list = $("#tag .btn-primary")
+            for (var i = 0; i < list.length; i++) {
+                var per = list[i]
+                tagSearch = tagSearch + per.value + ','
+            }
+        }
+        search('tag', tagSearch)
+    }
+
+    var getGroupSearch = function () {
+        var groupSearch = ''
+        if ($("[name='groupBtnAll']").hasClass('btn-primary')) {
+            groupSearch = ''
+        } else {
+            var list = $("#group .btn-primary")
+            for (var i = 0; i < list.length; i++) {
+                var per = list[i]
+                groupSearch = groupSearch + per.value + ','
+            }
+        }
+        search('group', groupSearch)
+    }    
+
+    var search = function (param, value) {
+        isSearch = true
+        if (JSON.parse(localStorage.getItem('modal_datatable_device_deliver-1-checkbox')) != null) {
+            searchStorage['selectedRows'] = JSON.parse(localStorage.getItem('modal_datatable_device_deliver-1-checkbox'))['selectedRows']
+            searchStorage['unselectedRows'] = JSON.parse(localStorage.getItem('modal_datatable_device_deliver-1-checkbox'))['unselectedRows']
+        }     
+        var datatable = $('#modal_datatable_device_deliver').KTDatatable()
+        var cur_query = datatable.getDataSourceParam('query')
+        if (cur_query == null) {
+            cur_query = {}
+            cur_query[param] = value
+        } else {
+            cur_query[param] = value
+        }
+        datatable.setDataSourceParam('query', cur_query)
+        datatable.load()
+    }
+
+    return {
+        // public functions
+        init: function () {
+            localSelectorDemo();
+            initSearch();
+        }
+    };
+}();
+
+jQuery(document).ready(function () {
+    KTDatatableRecordSelectionDemo.init();
+    KTDatatableDevice.init();
+});
+
+var EditDevice = function () {
+    $.ajax({
+        type: "POST",
+        url: $("#userdevicediliver_url").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            id: document.getElementById("id_edit_mission_data_id").value,
+            deviceid: document.getElementById("id_edit_mission_divice").value,
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {
+                window.location.href = response;
+            }
+        }
+    })
+}
+
+var initmodal = function () {
+    document.getElementById("id_name").value = '';
+}
+
+var initdevicemodal = function () {
+    document.getElementById("id_edit_mission_divice").value = '';
+    document.getElementById("id_edit_mission_data_id").value = '';
+}
+
+$('#editmissionModal').on('hidden.bs.modal', function () {
+    window.location.reload();
+});

@@ -1,0 +1,235 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 互刷任务{% endblock title %}
+{% block css %}
+<link href="{% static 'css/mystyle.css' %}" rel="stylesheet" type="text/css" />
+{% endblock css %}
+{% block subheader %}互刷任务{% endblock subheader %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    互刷任务
+                </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                    <button class="btn btn-default btn-bold btn-upper btn-font-sm" data-toggle="modal"
+                        data-target="#createmissionModal" onclick="initcreatemodal()">
+                        <i class="flaticon2-add-1"></i>
+                        新建任务
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入..."
+                                        id="generalMutualBrushMissionSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-form__group kt-form__group--inline">
+                                    <div class="kt-form__label">
+                                        <label>状态</label>
+                                    </div>
+                                    <div class="kt-form__control">
+                                        <select class="form-control bootstrap-select"
+                                            id="kt_form_MutualBrushMission_status">
+                                            <option value="">全部</option>
+                                            {% for status in mission_status %}
+                                            <option value={{ status.0 }}>{{ status.1 }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="local_record_selection"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade bd-example-modal-lg" id="createmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="createmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createmissionModalLabel">新建互刷任务</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_create_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>标题</label>
+                                        <input type='text' class="form-control" id="id_create_mission_title"
+                                            name="create_mission_title">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>目标播放量</label>
+                                        <input type='text' class="form-control" id="id_create_mission_count"
+                                            name="create_mission_count">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>点赞比例%(只填数字)</label>
+                                        <input type="text" class="form-control" id="id_create_mission_islike_rate"
+                                            name="create_mission_islike_rate">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>目标视频链接</label>
+                                        <input type='text' class="form-control" id="id_create_mission_videourl"
+                                            name="create_mission_videourl">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务开始时间(默认即时开始)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_create_mission_starttime" name='create_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="CreateMission()"
+                                    id="id_create_mission" name="create_mission">发布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-lg" id="editmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="editmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editmissionModalLabel">任务详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_edit_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>标题</label>
+                                        <input type='text' class="form-control" id="id_edit_mission_title"
+                                            name="edit_mission_title">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>视频地址</label>
+                                        <input type="text" class="form-control" id="id_edit_mission_videourl"
+                                            name="edit_mission_videourl">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>是否点赞:</label>
+                                    <div class="kt-radio-inline" id='id_islike'>
+                                        <label class="kt-radio kt-radio--brand">
+                                            <input type="radio" id='id_edit_islike_true' name="edit_islike"
+                                                value='true'> 是
+                                            <span></span>
+                                        </label>
+                                        <label class="kt-radio kt-radio--brand">
+                                            <input type="radio" id='id_edit_islike_false' name="edit_islike"
+                                                value='false'> 否
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label class="col-form-label">任务开始时间</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_edit_mission_starttime" name='edit_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>评论内容</label>
+                                        <textarea class="form-control" id="id_edit_mission_commenttext"
+                                            name="edit_mission_commenttext" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_edit_mission_data_id"
+                                        name="edit_mission_data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="EditMission()"
+                                    id="id_edit_mission" name="edit_mission">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'js/bootstrap-datetimepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datetimepicker.zh-CN.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/MissionManage/MutualBrushMission.js' %}" type="text/javascript"></script>
+{% endblock js %}

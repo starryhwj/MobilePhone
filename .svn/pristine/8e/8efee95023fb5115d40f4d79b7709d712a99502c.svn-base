@@ -1,0 +1,162 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 账户总览{% endblock title %}
+{% block css %}
+<!--begin::Page Custom Styles(used by this page) -->
+<link href="{% static 'css/pages/pricing/pricing-v1.css' %}" rel="stylesheet" type="text/css" />
+<!--end::Page Custom Styles -->
+{% endblock css %}
+{% block subheader %}账户总览{% endblock subheader %}
+{% block content %}
+<!-- begin:: Content -->
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="row row-no-padding">
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__title">
+                                        账号
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price">
+                                    {{ user.username }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox">
+                                    <div class="kt-iconbox__title">
+                                        邀请码：
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price">
+                                    {{ user.invite_code }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1 kt-pricing-v1--last">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox">
+                                    <div class="kt-iconbox__title">
+                                        余额
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price">
+                                    0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end::Portlet-->
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="row row-no-padding">
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__icon">
+                                        <div class="kt-iconbox__icon-bg"></div>
+                                        <i class="flaticon-rocket"></i>
+                                    </div>
+                                    <div class="kt-iconbox__title">
+                                        一个月
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__price">
+                                    69<span class="kt-pricing-v1__price-currency">¥</span>
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button" class="btn btn-brand btn-pill btn-widest btn-taller btn-bold">
+                                        立即开通
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__icon">
+                                        <div class="kt-iconbox__icon-bg"></div>
+                                        <i class="flaticon-customer"></i>
+                                    </div>
+                                    <div class="kt-iconbox__title">
+                                        半年
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__labels">
+                                    <del class="kt-pricing-v1__labels-item">原价699</del>
+                                </div>
+                                <div class="kt-pricing-v1__price">
+                                    169<span class="kt-pricing-v1__price-currency">¥</span>
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button" class="btn btn-brand btn-pill btn-widest btn-taller btn-bold">
+                                        立即购买
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-xl-4">
+                        <div class="kt-pricing-v1 kt-pricing-v1--last">
+                            <div class="kt-pricing-v1__header">
+                                <div class="kt-iconbox kt-iconbox--no-hover">
+                                    <div class="kt-iconbox__icon">
+                                        <div class="kt-iconbox__icon-bg"></div>
+                                        <i class="flaticon-bus-stop"></i>
+                                    </div>
+                                    <div class="kt-iconbox__title">
+                                        一年
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kt-pricing-v1__body">
+                                <div class="kt-pricing-v1__labels">
+                                    <del class="kt-pricing-v1__labels-item">原价1999</del>
+                                </div>
+                                <div class="kt-pricing-v1__price">
+                                    769<span class="kt-pricing-v1__price-currency">¥</span>
+                                </div>
+                                <div class="kt-pricing-v1__button">
+                                    <button type="button" class="btn btn-brand btn-pill btn-widest btn-taller btn-bold">
+                                        立即购买
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end::Portlet-->
+        </div>
+    </div>
+</div>
+<!-- end:: Content -->
+{% endblock content %}
+{% block js %}
+{% endblock js %}

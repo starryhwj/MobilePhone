@@ -1,0 +1,436 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 养号任务{% endblock title %}
+{% block css %}
+<link href="{% static 'css/mystyle.css' %}" rel="stylesheet" type="text/css" />
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    养号任务
+                </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                    <button class="btn btn-default btn-bold btn-upper btn-font-sm" data-toggle="modal"
+                        data-target="#createmissionModal" onclick="initcreatemodal()">
+                        <i class="flaticon2-add-1"></i>
+                        新建任务
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入..."
+                                        id="generalMaintenanceNumberMissionSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-form__group kt-form__group--inline">
+                                    <div class="kt-form__label">
+                                        <label>状态</label>
+                                    </div>
+                                    <div class="kt-form__control">
+                                        <select class="form-control bootstrap-select"
+                                            id="kt_form_MaintenanceNumberMission_status">
+                                            <option value="">全部</option>
+                                            {% for status in mission_status %}
+                                            <option value={{ status.0 }}>{{ status.1 }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="local_record_selection"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade bd-example-modal-lg" id="createmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="createmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createmissionModalLabel">新建养号任务</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_create_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>标题</label>
+                                        <input type='text' class="form-control" id="id_create_mission_title"
+                                            name="create_mission_title">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>作者昵称</label>
+                                        <input type="text" class="form-control" id="id_create_mission_tiktokid"
+                                            name="create_mission_tiktokid">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>持续时间 (分钟)</label>
+                                        <input type='text' class="form-control" id="id_create_mission_during"
+                                            name="create_mission_during">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>关键字</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_create_mission_keyword"
+                                                name="create_mission_keyword" disabled>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" data-toggle="modal"
+                                                    data-target="#keywordModal" onclick="setType('create')">选择
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>设备</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_create_mission_divice"
+                                                name="create_mission_divice" disabled>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" data-toggle="modal"
+                                                    data-target="#diviceModal">选择
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>关联设备ID</label>
+                                    <input type='text' class="form-control" id="id_create_device_id"
+                                        name="create_device_id">
+                                    <label>关联关键字ID</label>
+                                    <input type='text' class="form-control" id="id_create_keyword_id"
+                                        name="create_keyword_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="CreateMission()"
+                                    id="id_create_mission" name="create_mission">发布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-lg" id="editmissionModal" tabindex="-1" role="dialog"
+                aria-labelledby="editmissionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editmissionModalLabel">任务详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off"
+                            id="kt_edit_mission_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>标题</label>
+                                        <input type='text' class="form-control" id="id_edit_mission_title"
+                                            name="edit_mission_title">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>作者昵称</label>
+                                        <input type="text" class="form-control" id="id_edit_mission_tiktokid"
+                                            name="edit_mission_tiktokid">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>持续时间 (分钟)</label>
+                                        <input type='text' class="form-control" id="id_edit_mission_during"
+                                            name="edit_mission_during">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>关键字</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_edit_mission_keyword"
+                                                name="edit_mission_keyword" disabled>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" data-toggle="modal"
+                                                    data-target="#keywordModal" onclick="setType('edit')">选择
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>设备</label>
+                                        <input type="text" class="form-control" id="id_edit_mission_divice"
+                                            name="edit_mission_divice" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_edit_mission_data_id"
+                                        name="edit_mission_data_id">
+                                    <label>关联关键字ID</label>
+                                    <input type='text' class="form-control" id="id_edit_keyword_id"
+                                        name="edit_keyword_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="EditMission()"
+                                    id="id_edit_mission" name="edit_mission">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diviceModal" class="modal fade" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content" style="min-height: 590px;">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                我的设备
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!--begin: Search Form -->
+                            <div class="kt-portlet__body">
+                                <div class="search-section">
+                                    <div class="search-section__content search-section__content--border--top"
+                                        id="status">
+                                        <label>设备状态:</label> &nbsp &nbsp
+                                        <button type="button" name='statusBtn' value=""
+                                            class="btn btn-primary btn-sm">全部</button>
+                                        <button type="button" name='statusBtn' value="True"
+                                            class="btn btn-outline-hover-primary btn-sm">启用</button>
+                                        <button type="button" name='statusBtn' value="False"
+                                            class="btn btn-outline-hover-primary btn-sm">停用</button>
+                                    </div>
+                                </div>
+                                <div class="search-section">
+                                    <div class="search-section__content search-section__content--border--bottom"
+                                        id="isonline">
+                                        <label>在线信息:</label> &nbsp &nbsp
+                                        <button type="button" name='isonlineBtn' value=""
+                                            class="btn btn-primary btn-sm">全部</button>
+                                        <button type="button" name='isonlineBtn' value="True"
+                                            class="btn btn-outline-hover-primary btn-sm">在线</button>
+                                        <button type="button" name='isonlineBtn' value="False"
+                                            class="btn btn-outline-hover-primary btn-sm">离线</button>
+                                    </div>
+                                </div>
+                                <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                                    <div class="row align-items-center">
+                                        <div class="col-xl-8 order-2 order-xl-1">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                                    <div class="kt-form__group kt-form__group--inline">
+                                                        <div class="kt-form__label">
+                                                            <label style="width: 30px;">列名</label>
+                                                        </div>
+                                                        <div class="kt-form__control">
+                                                            <select class="form-control bootstrap-select"
+                                                                id="kt_device_column">
+                                                                <option value="-1">请选择</option>
+                                                                <option value="remark">备注</option>
+                                                                <option value="agent">代理名称</option>
+                                                                <option value="tiktok">抖音账号</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                                    <div class="kt-input-icon kt-input-icon--left">
+                                                        <input type="text" class="form-control" placeholder="请输入.."
+                                                            id="generalDeviceSearch">
+                                                        <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                                            <span><i class="la la-search"></i></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--end: Search Form -->
+                            </div>
+
+
+                            <!--end: Search Form -->
+                            <!--begin: Selected Rows Group Action Form -->
+                            <div class="kt-form kt-fork--label-align-right kt-margin-t-20 collapse"
+                                id="kt_datatable_device_group_action_form">
+                                <div class="row align-items-center">
+                                    <div class="col-xl-12">
+                                        <div class="kt-form__group kt-form__group--inline">
+                                            <div class="kt-form__label kt-form__label-no-wrap">
+                                                <label class="kt--font-bold kt--font-danger-">选择了
+                                                    <span id="kt_datatable_device_selected_number">0</span> 条数据:</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end: Selected Rows Group Action Form -->
+
+                            <!--begin: Datatable -->
+                            <div id="modal_datatable_device"></div>
+                            <!--end: Datatable -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-brand " id="kt_datatable_device_select_all"
+                                disabled>选择所选
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="keywordModal" class="modal fade" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="min-height: 590px;">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                关键字
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="margin:0 auto">
+                            <div class="kt-portlet">
+                                <div class="kt-portlet__body">
+                                    <div class="dual-listbox kt-dual-listbox-2">
+                                        <div class="dual-listbox__container">
+                                            <div>
+                                                <table
+                                                    class="table table-striped- table-bordered table-hover table-checkable"
+                                                    id="left_table">
+                                                    <thead>
+                                                        <th>ID</th>
+                                                        <th>关键字</th>
+                                                        <th>标签</th>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for keyword in SelectMaintenanceNumberMissionKeyword %}
+                                                        <tr>
+                                                            <td>{{ keyword.id }}</td>
+                                                            <td>{{ keyword.SelectName }}</td>
+                                                            <td>{{ keyword.SelectClassification }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="dual-listbox__buttons">
+                                                <button class="dual-listbox__button" onclick="fast_next()">
+                                                    <i class="flaticon2-fast-next"></i>
+                                                </button>
+                                                <button class="dual-listbox__button" onclick="next()">
+                                                    <i class="flaticon2-next"></i>
+                                                </button>
+                                                <button class="dual-listbox__button" onclick="back()">
+                                                    <i class="flaticon2-back"></i>
+                                                </button>
+                                                <button class="dual-listbox__button" onclick="fast_back()">
+                                                    <i class="flaticon2-fast-back"></i>
+                                                </button>
+                                            </div>
+                                            <div>
+                                                <table
+                                                    class="table table-striped- table-bordered table-hover table-checkable"
+                                                    id="right_table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>关键字</th>
+                                                            <th>标签</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-brand " id="kt_datatable_keyword_select_all"
+                                onclick="keyword_select_all()" data-dismiss="modal">确定
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="device_data_url">{{ device_data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="getdevicenamebyids_url">{{ getdevicenamebyids_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="keyword_data_url">{{ keyword_data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="getkeywordnamebyids_url">{{ getkeywordnamebyids_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_keyword_url">{{ create_keyword_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/MissionManage/MaintenanceNumberMission.js' %}" type="text/javascript"></script>
+{% endblock js %}

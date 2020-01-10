@@ -1,0 +1,138 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 视频标签{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    视频标签
+                </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                    <button class="btn btn-default btn-bold btn-upper btn-font-sm" data-toggle="modal"
+                            data-target="#createModal" onclick="initmodal()">
+                        <i class="flaticon2-add-1"></i>
+                        添加标签
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <!--begin: Selected Rows Group Action Form -->
+            <div class="kt-form kt-fork--label-align-right kt-margin-t-20 collapse" id="kt_datatable_group_action_form">
+                <div class="row align-items-center">
+                    <div class="col-xl-12">
+                        <div class="kt-form__group kt-form__group--inline">
+                            <div class="kt-form__label kt-form__label-no-wrap">
+                                <label class="kt--font-bold kt--font-danger-">选择了
+                                    <span id="kt_datatable_selected_number">0</span> 条数据:</label>
+                            </div>
+                            <div class="kt-form__control">
+                                <div class="btn-toolbar">
+                                    <button class="btn btn-sm btn-danger" type="button" id="kt_datatable_delete_all">
+                                        删除所选
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Selected Rows Group Action Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="local_record_selection"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">添加标签</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-login-v1__form kt-form"
+                              autocomplete="off"
+                              id="kt_login_form" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label>名称</label>
+                                    <input type='text' class="form-control" id="id_name" name="name">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand " onclick="CreateCommodityCategory()">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editModalLabel">标签详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-login-v1__form kt-form"
+                              autocomplete="off" method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label>名称</label>
+                                    <input type='text' class="form-control" id="id_edit_name"
+                                           name="edit_name">
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_data_id"
+                                           name="data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand" onclick="EditCommodityCategory()">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/VideoManage/VideoLabel.js' %}" type="text/javascript"></script>
+{% endblock js %}

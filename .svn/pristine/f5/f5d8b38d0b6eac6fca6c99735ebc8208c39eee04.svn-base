@@ -1,0 +1,469 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 我的商品{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<!-- begin:: Content -->
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    我的商品
+                </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                    <button class="btn btn-default btn-bold btn-upper btn-font-sm" data-toggle="modal"
+                        data-target="#createModal" onclick="initmodal()">
+                        <i class="flaticon2-add-1"></i>
+                        添加商品
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--all" id="commodityType">
+                    <label>类型:</label> &nbsp &nbsp
+                    <button type="button" name='commodityTypeBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                    <button type="button" name='commodityTypeBtn' value="-1"
+                        class="btn btn-outline-hover-primary btn-sm">无标签</button>
+                    {% for cat in category%}
+                    <button type="button" name='commodityTypeBtn' value="{{ cat.id }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ cat.Name }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入..."
+                                        id="generalCommoditySearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+
+            <!--begin: Selected Rows Group Action Form -->
+            <div class="kt-form kt-fork--label-align-right kt-margin-t-20 collapse" id="kt_datatable_group_action_form">
+                <div class="row align-items-center">
+                    <div class="col-xl-12">
+                        <div class="kt-form__group kt-form__group--inline">
+                            <div class="kt-form__label kt-form__label-no-wrap">
+                                <label class="kt--font-bold kt--font-danger-">选择了
+                                    <span id="kt_datatable_selected_number">0</span> 条数据:</label>
+                            </div>
+                            <div class="kt-form__control">
+                                <div class="btn-toolbar">
+                                    <button class="btn btn-sm btn-danger" type="button" id="kt_datatable_delete_all">
+                                        删除所选
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Selected Rows Group Action Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_mycommodity"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">添加商品</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-login-v1__form kt-form" autocomplete="off" id="kt_login_form" method="post"
+                            enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label>*淘宝链接</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="id_url" name="url">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="button"
+                                                onclick="GetTaoBaoCommodity()">查询
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="kt-section__content collapse" id="pic_box">
+                                    <a class="kt-media">
+                                        <img src="" alt="image" name="pic1" id="id_pic1">
+                                    </a>
+                                    <a class="kt-media">
+                                        <img src="" alt="image" name="pic2" id="id_pic2">
+                                    </a>
+                                    <a class="kt-media">
+                                        <img src="" alt="image" name="pic3" id="id_pic3">
+                                    </a>
+                                    <a class="kt-media">
+                                        <img src="" alt="image" name="pic4" id="id_pic4">
+                                    </a>
+                                    <a class="kt-media">
+                                        <img src="" alt="image" name="pic5" id="id_pic5">
+                                    </a>
+                                </div>
+                                <div class="form-group">
+                                    <label>标题</label>
+                                    <input type='text' class="form-control" id="id_title" name="title"
+                                        disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>短标题(10个字符以内，只包含中英文)</label>
+                                    <input type='text' class="form-control" id="id_subtitle" name="subtitle">
+                                </div>
+                                <div class="form-group">
+                                    <label>类别</label>
+                                    <div>
+                                        <select class="form-control kt-select2" id="id_category" name="category"
+                                            multiple="multiple">
+                                            {% for cat in category %}
+                                            <option value={{ cat.id }}>{{ cat.Name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品ID</label>
+                                    <input type='text' class="form-control" id="id_outsideplatformid"
+                                        name="outsideplatformid" disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>售价</label>
+                                    <input type='text' class="form-control" id="id_price" name="price"
+                                        disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>销量</label>
+                                    <input type='text' class="form-control" id="id_sales" name="sales"
+                                        disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>佣金比例</label>
+                                    <input type='text' class="form-control" id="id_commissionpercent"
+                                        name="commissionpercent" disabled="disabled">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand " onclick="CreateCommodity()">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editModalLabel">商品详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-login-v1__form kt-form" autocomplete="off" method="post"
+                            enctype="multipart/form-data" id='editform'>
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label>淘宝链接</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="id_edit_url" name="edit_url"
+                                            disabled="disabled">
+                                    </div>
+                                </div>
+                                <a class="kt-media">
+                                    <img src="" alt="image" name="edit_pic1" id="id_edit_pic1">
+                                </a>
+                                <a class="kt-media">
+                                    <img src="" alt="image" name="edit_pic2" id="id_edit_pic2">
+                                </a>
+                                <a class="kt-media">
+                                    <img src="" alt="image" name="edit_pic3" id="id_edit_pic3">
+                                </a>
+                                <a class="kt-media">
+                                    <img src="" alt="image" name="edit_pic4" id="id_edit_pic4">
+                                </a>
+                                <a class="kt-media">
+                                    <img src="" alt="image" name="edit_pic5" id="id_edit_pic5">
+                                </a>
+                                <div class="form-group">
+                                    <label>标题</label>
+                                    <input type='text' class="form-control" disabled="disabled" id="id_edit_title"
+                                        name="edit_title">
+                                </div>
+                                <div class="form-group">
+                                    <label>短标题(10个字符以内，只包含中英文)</label>
+                                    <input type='text' class="form-control" id="id_edit_subtitle" name="edit_subtitle">
+                                </div>
+                                <div class="form-group">
+                                    <label>类别</label>
+                                    <div>
+                                        <select class="form-control kt-select2" id="id_edit_category"
+                                            name="edit_category" multiple="multiple">
+                                            {% for cat in category %}
+                                            <option value={{ cat.id }}>{{ cat.Name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品ID</label>
+                                    <input type='text' class="form-control" id="id_edit_outsideplatformid"
+                                        name="edit_outsideplatformid" disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>售价</label>
+                                    <input type='text' class="form-control" id="id_edit_price" name="edit_price"
+                                        disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>销量</label>
+                                    <input type='text' class="form-control" id="id_edit_sales" name="edit_sales"
+                                        disabled="disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label>佣金比例</label>
+                                    <input type='text' class="form-control" id="id_edit_commissionpercent"
+                                        name="edit_commissionpercent" disabled="disabled">
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_data_id" name="data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand" onclick="EditCommodity()">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-lg" id="uploadVideoModal" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">批量添加视频</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off" id="kt_login_form"
+                            method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>标题(用回车分隔不同的标题)</label>
+                                        <textarea type='text' class="form-control" id="id_video_title"
+                                            name="video_title" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>视频标签</label>
+                                        <div>
+                                            <select class="form-control kt-select2" id="id_video_category"
+                                                name="video_category" multiple="multiple">
+                                                {% for cat in video_category %}
+                                                <option value={{ cat.id }}>{{ cat.Name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>备注</label>
+                                        <input type='text' class="form-control" id="id_video_remark"
+                                            name="video_remark">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>话题(用回车分隔不同的话题)</label>
+                                        <textarea type="text" class="form-control" id="id_create_video_keyword"
+                                            name="create_video_keyword" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <div class="dropzone dropzone-multi" id="kt_dropzone_5">
+                                            <div class="dropzone-panel">
+                                                <a class="dropzone-select btn btn-label-brand btn-bold btn-sm">选择文件</a>
+                                            </div>
+                                            <div class="dropzone-items">
+                                                <div class="dropzone-item" style="display:none">
+                                                    <div class="dropzone-file">
+                                                        <div class="dropzone-filename" title="some_image_file_name.jpg">
+                                                            <span data-dz-name>some_image_file_name.jpg</span>
+                                                            <strong>(<span data-dz-size>340kb</span>)</strong>
+                                                        </div>
+                                                        <div class="dropzone-error" data-dz-errormessage></div>
+                                                    </div>
+                                                    <div class="dropzone-progress">
+                                                        <div class="progress">
+                                                            <div class="progress-bar kt-bg-brand" role="progressbar"
+                                                                aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                                                                data-dz-uploadprogress></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="dropzone-toolbar">
+                                                        <span class="dropzone-delete" data-dz-remove><i
+                                                                class="flaticon2-cross"></i></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="form-text text-muted">一次最多上传50个视频，每个视频文件大小不能超过50MB</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>关联商品ID</label>
+                                    <input type='text' class="form-control" id="id_commodity_id" name="commodity_id">
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>随机数</label>
+                                    <input type='text' class="form-control" id="id_guid" name="guid">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-brand " disabled onclick="CreateMutiVideo()"
+                                    id="id_save_video" name="save_video">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-lg" id="missionModal" tabindex="-1" role="dialog"
+                aria-labelledby="missionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="missionModalLabel">批量发布视频任务</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off" id="kt_mission_form"
+                            method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>商品</label>
+                                        <input type="text" class="form-control" id="id_mission_good" name="mission_good"
+                                            disabled>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>任务开始时间(默认即时开始)</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_create_mission_starttime" name='create_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>设备</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_create_mission_divice"
+                                                name="mission_divice" disabled>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" data-toggle="modal"
+                                                    data-target="#diviceModal">选择
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_commodity_mission_id"
+                                        name="mission_data_id">
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>关联设备ID</label>
+                                    <input type='text' class="form-control" id="id_create_device_id" name="device_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="CreateMutiMission()"
+                                    id="id_mission_save" name="mission_save">发布
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diviceModal" class="modal fade" role="dialog" aria-hidden="true">
+
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_url">{{ create_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="gettaobaocommodity_url">{{ gettaobaocommodity_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="upload_url">{{ upload_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="create_video_url">{{ create_video_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="createmutimission_url">{{ createmutimission_url }}</div>         
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+
+<!-- end:: Content -->
+{% endblock content %}
+{% block js %}
+<script src="{% static 'js/bootstrap-datetimepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datetimepicker.zh-CN.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/CommodityManage/MyCommodity.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/control/DeviceDatatable.js' %}" type="text/javascript"></script>
+{% endblock js %}

@@ -1,0 +1,183 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}聚宝云 | 视频任务{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block content %}
+<div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+    <div class="kt-portlet kt-portlet--mobile">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    视频任务
+                </h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--top" id="status">
+                    <label>任务状态:</label> &nbsp &nbsp
+                    <button type="button" name='statusBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                    {% for status in mission_status %}
+                    <button type="button" name='statusBtn' value="{{ status.0 }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ status.1 }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--middle" id="videoType">
+                    <label>视频类型:</label> &nbsp &nbsp
+                    <button type="button" name='videoTypeBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                    <button type="button" name='videoTypeBtn' value="-1"
+                        class="btn btn-outline-hover-primary btn-sm">无标签</button>
+                    {% for cat in video_category %}
+                    <button type="button" name='videoTypeBtn' value="{{ cat.id }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ cat.Name }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="search-section">
+                <div class="search-section__content search-section__content--border--bottom" id="commodityType">
+                    <label>商品类型:</label> &nbsp &nbsp
+                    <button type="button" name='commodityTypeBtnAll' value="" class="btn btn-primary btn-sm">全部</button>
+                    <button type="button" name='commodityTypeBtn' value="-1"
+                        class="btn btn-outline-hover-primary btn-sm">无标签</button>
+                    {% for cat in commodity_category %}
+                    <button type="button" name='commodityTypeBtn' value="{{ cat.id }}"
+                        class="btn btn-outline-hover-primary btn-sm">{{ cat.Name }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!--begin: Search Form -->
+            <div class="kt-form kt-fork--label-right kt-margin-t-20 kt-margin-b-10">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 kt-margin-b-20-tablet-and-mobile">
+                                <div class="kt-input-icon kt-input-icon--left">
+                                    <input type="text" class="form-control" placeholder="请输入..."
+                                        id="generalVideoMissionSearch">
+                                    <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                                        <span><i class="la la-search"></i></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--end: Search Form -->
+        </div>
+        <div class="kt-portlet__body kt-portlet__body--fit">
+
+            <!--begin: Datatable -->
+            <div class="kt_datatable" id="datatable_video_mission"></div>
+
+            <!--end: Datatable -->
+
+            <!-- begin: Modal -->
+            <div class="modal fade bd-example-modal-lg" id="missionModal" tabindex="-1" role="dialog"
+                aria-labelledby="missionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="missionModalLabel">任务详情</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form class="kt-form kt-form--fit kt-form--label-right" autocomplete="off" id="kt_mission_form"
+                            method="post" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>标题</label>
+                                        <input type='text' class="form-control" id="id_mission_title"
+                                            name="mission_title" disabled>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>商品</label>
+                                        <input type="text" class="form-control" id="id_mission_good" name="mission_good"
+                                            disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>视频类别</label>
+                                        <input type="text" class="form-control" id="id_mission_category"
+                                            name="mission_good" disabled>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>备注</label>
+                                        <input type='text' class="form-control" id="id_mission_remark"
+                                            name="mission_remark" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <label>话题</label>
+                                        <input type="text" class="form-control" id="id_mission_keyword"
+                                            name="mission_keyword">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label>任务开始时间</label>
+                                        <div class="input-group date">
+                                            <input type="text" class="form-control" readonly
+                                                id="id_edit_mission_starttime" name='edit_mission_starttime' />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i
+                                                        class="la la-calendar-check-o glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <label>设备</label>
+                                        <input type="text" class="form-control" id="id_mission_divice"
+                                            name="mission_divice" disabled>
+                                    </div>
+                                </div>
+                                <div class="kt-section__content" id="mission_video_box">
+                                    <video name="video" id="id_mission_video" width="100%" height="360" controls>
+                                        <source src="" type="video/mp4">
+                                    </video>
+                                </div>
+                                <div class="form-group" style="display: none">
+                                    <label>数据ID</label>
+                                    <input type='text' class="form-control" id="id_mission_data_id"
+                                        name="mission_data_id">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-brand" data-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary " onclick="EditMission()"
+                                    id="id_mission_save" name="mission_save">保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Modal -->
+
+            <!--begin: HideData-->
+            <div class="btn btn-clean kt-hidden" id="data_url">{{ data_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="delete_url">{{ delete_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="get_by_id_url">{{ get_by_id_url }}</div>
+            <div class="btn btn-clean kt-hidden" id="edit_url">{{ edit_url }}</div>
+            {% csrf_token %}
+            <!--end: HideData-->
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block js %}
+<script src="{% static 'js/bootstrap-datetimepicker.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/bootstrap-datetimepicker.zh-CN.js' %}" type="text/javascript"></script>
+<script src="{% static 'plugins/custom/datatables/datatables.bundle.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/pages/custom/VideoManage/VideoMission.js' %}" type="text/javascript"></script>
+{% endblock js %}

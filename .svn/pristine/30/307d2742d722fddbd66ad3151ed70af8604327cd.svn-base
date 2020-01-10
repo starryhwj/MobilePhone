@@ -1,0 +1,718 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!-- begin::Head -->
+
+<head>
+    <base href="">
+    <meta charset="utf-8" />
+    <title>{% block title %}{% endblock title %}</title>
+    {% block css %}{% endblock css %}
+    <meta name="description" content="Latest updates and statistic charts">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!--begin::Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700">
+
+    <!--end::Fonts -->
+
+    <!--begin::Page Vendors Styles(used by this page) -->
+    <link href="{% static 'plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet" type="text/css" />
+
+    <!--end::Page Vendors Styles -->
+
+    <!--begin::Global Theme Styles(used by all pages) -->
+    <link href="{% static 'plugins/global/plugins.bundle.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/style.bundle.css' %}" rel="stylesheet" type="text/css" />
+
+    <!--end::Global Theme Styles -->
+
+    <!--begin::Layout Skins(used by all pages) -->
+    <link href="{% static 'css/skins/header/base/light.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/skins/header/menu/light.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/skins/brand/navy.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/skins/aside/navy.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/mystyle.css' %}" rel="stylesheet" type="text/css" />
+    <!--end::Layout Skins -->
+    <link rel="shortcut icon" href="{% static 'media/logos/favicon.ico' %}" />
+</head>
+
+<!-- end::Head -->
+
+<!-- begin::Body -->
+
+<body
+    class="kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--fixed kt-page--loading">
+
+    <!-- begin:: Header Mobile -->
+    <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
+        <div class="kt-header-mobile__logo">
+            <a href="index.html">
+                <img alt="Logo" src="{% static 'media/logos/logo-6.png' %}" />
+            </a>
+        </div>
+        <div class="kt-header-mobile__toolbar">
+            <button class="kt-header-mobile__toolbar-toggler kt-header-mobile__toolbar-toggler--left"
+                id="kt_aside_mobile_toggler"><span></span></button>
+            <button class="kt-header-mobile__toolbar-topbar-toggler" id="kt_header_mobile_topbar_toggler"><i
+                    class="flaticon-more"></i></button>
+        </div>
+    </div>
+
+    <!-- end:: Header Mobile -->
+
+    <!-- begin:: Root -->
+    <div class="kt-grid kt-grid--hor kt-grid--root">
+
+        <!-- begin:: Page -->
+        <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+
+            <!-- begin:: Aside -->
+            <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
+            <div class="kt-aside  kt-aside--fixed  kt-grid__item kt-grid kt-grid--desktop kt-grid--hor-desktop"
+                id="kt_aside">
+
+                <!-- begin::Aside Brand -->
+                <div class="kt-aside__brand kt-grid__item " id="kt_aside_brand">
+                    <div class="kt-aside__brand-logo">
+                        <a href="index.html">
+                            <img alt="Logo" src="{% static 'media/logos/logo-6.png' %}" />
+                        </a>
+                    </div>
+                    <div class="kt-aside__brand-tools">
+                        <button class="kt-aside__brand-aside-toggler kt-aside__brand-aside-toggler--left"
+                            id="kt_aside_toggler"><span></span></button>
+                    </div>
+                </div>
+
+                <!-- end:: Aside Brand -->
+
+                <!-- begin:: Aside Menu -->
+                <div class="kt-aside-menu-wrapper kt-grid__item kt-grid__item--fluid" id="kt_aside_menu_wrapper">
+                    <div id="kt_aside_menu" class="kt-aside-menu " data-ktmenu-vertical="1" data-ktmenu-scroll="1"
+                        data-ktmenu-dropdown-timeout="500">
+                        {% if user.is_superuser %}
+                        <ul class="kt-menu__nav ">
+                            <li {% if location.IsIndexPage %} class="kt-menu__item kt-menu__item--active" {% else %}
+                                class="kt-menu__item" {% endif %} aria-haspopup="true"><a href="/"
+                                    class="kt-menu__link "><i class="kt-menu__link-icon flaticon2-user"></i><span
+                                        class="kt-menu__link-text">账户总览</span></a></li>
+                            <li {% if location.IsDeviceManagePage %} class="kt-menu__item kt-menu__item--active"
+                                {% else %} class="kt-menu__item" {% endif %} aria-haspopup="true"><a
+                                    href="/DeviceManage" class="kt-menu__link "><i
+                                        class="kt-menu__link-icon flaticon2-gear"></i><span
+                                        class="kt-menu__link-text">设备管理</span></a></li>
+                            <li {% if location.IsMyAccountMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-list-1"></i><span
+                                        class="kt-menu__link-text">账号管理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">账号管理</span></span>
+                                        </li>
+                                        <li {% if location.IsAccountGroupPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AccountGroup"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">账号分组</span></a></li>
+                                        <li {% if location.IsAccountListPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AccountList"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">账号列表</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsCommodityManageMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-supermarket"></i><span
+                                        class="kt-menu__link-text">商品管理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">商品管理</span></span>
+                                        </li>
+                                        <li style="display: none;" {% if location.IsCommoditySelectionPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/CommoditySelection"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">选品库</span></a></li>
+                                        <li {% if location.IsMyCommodityPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/MyCommodity"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">我的商品</span></a></li>
+                                        <li {% if location.IsCommodityCategoryPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/CommodityCategory"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">商品类别</span></a></li>
+                                        <li style="display: none;" {% if location.IsCommodityMissionManagePage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/CommodityMissionManage"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">任务管理</span></a></li>
+                                        <li {% if location.IsOrderPage %} class="kt-menu__item kt-menu__item--active"
+                                            {% else %} class="kt-menu__item" {% endif %} aria-haspopup="true"><a
+                                                href="/Order" class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">订单管理</span></a></li>
+                                        <li {% if location.IsALIConfigPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/ALIConfig"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">阿里妈妈配置</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsVideoManageMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-photo-camera"></i><span
+                                        class="kt-menu__link-text">视频管理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">视频管理</span></span>
+                                        </li>
+                                        <li {% if location.IsMyVideoPage %} class="kt-menu__item kt-menu__item--active"
+                                            {% else %} class="kt-menu__item" {% endif %} aria-haspopup="true"><a
+                                                href="/MyVideo" class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">我的视频</span></a></li>
+                                        <li style="display: none;" {% if location.IsAlreadySendVideoPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AlreadySendVideo"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">已发视频</span></a></li>
+                                        <li {% if location.IsVideoMissionPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/VideoMission"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">视频任务</span></a></li>
+                                        <li {% if location.IsVideoLabelPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/VideoLabel"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">视频标签</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsMyAgentMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-group"></i><span
+                                        class="kt-menu__link-text">我的代理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">我的代理</span></span>
+                                        </li>
+                                        <li {% if location.IsAgentVerifyPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AgentVerify"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">代理审核</span></a></li>
+                                        <li {% if location.IsAgentListPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AgentList"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">代理列表</span></a></li>
+                                        <li {% if location.IsAgentDetailPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AgentDetail"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">代理账号信息</span></a></li>
+                                        <li {% if location.IsCashManagePage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/CashManage"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">提现管理</span></a></li>
+                                        <li style="display: none;" {% if location.IsOrderCollectPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/OrderCollect"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">订单采集</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsMissionMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-indent-dots"></i><span
+                                        class="kt-menu__link-text">任务管理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">任务管理</span></span>
+                                        </li>
+                                        <li {% if location.IsMutualBrushMissionSubMenu %}
+                                            class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                            {% else %} class="kt-menu__item  kt-menu__item--submenu"
+                                            {% endif %}aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a
+                                                href="javascript:;" class="kt-menu__link kt-menu__toggle"><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">互刷任务</span><i
+                                                    class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                            <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                                <ul class="kt-menu__subnav">
+                                                    <li {% if location.IsPublishMutualBrushMissionPage %}
+                                                        class="kt-menu__item kt-menu__item--active" {% else %}
+                                                        class="kt-menu__item" {% endif %} aria-haspopup="true"><a
+                                                            href="/PublishMutualBrushMission" class="kt-menu__link "><i
+                                                                class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                                class="kt-menu__link-text">互刷任务</span></a></li>
+                                                    <li {% if location.IsCommentLibraryPage %}
+                                                        class="kt-menu__item kt-menu__item--active" {% else %}
+                                                        class="kt-menu__item" {% endif %} aria-haspopup="true"><a
+                                                            href="/CommentLibrary" class="kt-menu__link "><i
+                                                                class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                                class="kt-menu__link-text">评论库</span></a></li>
+                                                </ul>
+                                            </div>
+                                        </li>
+                                        <li {% if location.IsPublishMaintenanceNumberMissionPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/PublishMaintenanceNumberMission"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">养号任务</span></a></li>
+                                        <li {% if location.IsPublishScanMissionPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/PublishScanMission"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">刷粉任务</span></a></li>
+                                        <li {% if location.IsPublishFollowMissionPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/PublishFollowMission"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">关注任务</span></a></li>
+                                        <li {% if location.IsMissionPlanTemplatePage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/MissionPlanTemplate"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">计划模板</span></a></li>
+                                        <li {% if location.IsAllMissionsPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AllMissions"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">全部任务</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsMyLabelMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-tag"></i><span
+                                        class="kt-menu__link-text">标签管理</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">标签管理</span></span>
+                                        </li>
+                                        <li {% if location.IsMaintenanceNumberMissionKeywordClassificationPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a
+                                                href="/PublishMaintenanceNumberMissionKeywordClassification"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">我的标签</span></a></li>
+                                        <li {% if location.IsMaintenanceNumberMissionKeywordPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a
+                                                href="/PublishMaintenanceNumberMissionKeyword" class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">关键词管理</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li {% if location.IsDataAnalysisMenu %}
+                                class="kt-menu__item  kt-menu__item--submenu kt-menu__item--open kt-menu__item--here"
+                                {% else %} class="kt-menu__item  kt-menu__item--submenu" {% endif %}
+                                aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a href="javascript:;"
+                                    class="kt-menu__link kt-menu__toggle"><i
+                                        class="kt-menu__link-icon flaticon2-analytics-2"></i><span
+                                        class="kt-menu__link-text">数据分析</span><i
+                                        class="kt-menu__ver-arrow la la-angle-right"></i></a>
+                                <div class="kt-menu__submenu "><span class="kt-menu__arrow"></span>
+                                    <ul class="kt-menu__subnav">
+                                        <li class="kt-menu__item  kt-menu__item--parent" aria-haspopup="true"><span
+                                                class="kt-menu__link"><span
+                                                    class="kt-menu__link-text">数据分析</span></span>
+                                        </li>
+                                        <li {% if location.IsAccountDataAnalysisPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/AccountDataAnalysis"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">账号数据分析</span></a></li>
+                                        <li {% if location.IsWorksDataAnalysisPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/WorksDataAnalysis"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">视频数据分析</span></a></li>
+                                        <li {% if location.IsCommodityDataAnalysisPage %}
+                                            class="kt-menu__item kt-menu__item--active" {% else %} class="kt-menu__item"
+                                            {% endif %} aria-haspopup="true"><a href="/CommodityDataAnalysis"
+                                                class="kt-menu__link "><i
+                                                    class="kt-menu__link-bullet kt-menu__link-bullet--dot"><span></span></i><span
+                                                    class="kt-menu__link-text">商品数据分析</span></a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+                        {% else %}
+                        <ul class="kt-menu__nav ">
+                            <li {% if location.IsIndexPage %} class="kt-menu__item kt-menu__item--active" {% else %}
+                                class="kt-menu__item" {% endif %} aria-haspopup="true"><a href="/"
+                                    class="kt-menu__link "><i class="kt-menu__link-icon flaticon2-user"></i><span
+                                        class="kt-menu__link-text">账户总览</span></a></li>
+                            </li>
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- end:: Aside Menu -->
+            </div>
+
+            <!-- end:: Aside -->
+
+            <!-- begin:: Wrapper -->
+            <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+                <!-- begin:: Header -->
+                <div id="kt_header" class="kt-header kt-grid__item  kt-header--fixed ">
+
+                    <!-- begin:: Header Menu -->
+                    <button class="kt-header-menu-wrapper-close" id="kt_header_menu_mobile_close_btn"><i
+                            class="la la-close"></i></button>
+                    <div class="kt-header-menu-wrapper" id="kt_header_menu_wrapper">
+                        <div id="kt_header_menu" class="kt-header-menu kt-header-menu-mobile  kt-header-menu--layout- ">
+
+                        </div>
+                    </div>
+
+                    <!-- end:: Header Menu -->
+
+
+                    <!-- begin:: Header Topbar -->
+                    <div class="kt-header__topbar">
+
+                        <!--begin: Search -->
+                        {% if user.is_superuser %}
+                        <div class="kt-header__topbar-item kt-header__topbar-item--search dropdown">
+                            <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="10px,0px">
+                                <span class="kt-header__topbar-icon"><i class="flaticon2-search-1"></i></span>
+                            </div>
+                            <div
+                                class="dropdown-menu dropdown-menu-fit dropdown-menu-right dropdown-menu-top-unround dropdown-menu-anim dropdown-menu-lg">
+                                <div class="kt-quick-search kt-quick-search--dropdown kt-quick-search--result-compact"
+                                    id="kt_quick_search_dropdown">
+                                    <form method="get" class="kt-quick-search__form">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend"><span class="input-group-text"><i
+                                                        class="flaticon2-search-1"></i></span></div>
+                                            <input type="text" class="form-control kt-quick-search__input"
+                                                placeholder="Search...">
+                                            <div class="input-group-append"><span class="input-group-text"><i
+                                                        class="la la-close kt-quick-search__close"></i></span></div>
+                                        </div>
+                                    </form>
+                                    <div class="kt-quick-search__wrapper kt-scroll" data-scroll="true" data-height="325"
+                                        data-mobile-height="200">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <!--end: Search -->
+
+                        <!--begin: Notifications -->
+                        <div class="kt-header__topbar-item dropdown">
+                            <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="30px,0px">
+                                <span class="kt-header__topbar-icon">
+                                    <i class="flaticon2-bell-alarm-symbol"></i>
+                                    <span
+                                        class="kt-badge kt-badge--dot kt-badge--notify kt-badge--sm kt-badge--brand"></span>
+                                </span>
+                            </div>
+                            <div
+                                class="dropdown-menu dropdown-menu-fit dropdown-menu-right dropdown-menu-anim dropdown-menu-top-unround dropdown-menu-lg">
+                                <form>
+                                    <div class="kt-head"
+                                        style="background-image: url({% static 'media/misc/head_bg_sm.jpg' %})">
+                                        <h3 class="kt-head__title">通知</h3>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!--end: Notifications -->
+
+                        <!--begin: Quick Actions -->
+                        {% if user.is_superuser %}
+                        <div class="kt-header__topbar-item">
+                            <div class="kt-header__topbar-wrapper" id="kt_offcanvas_toolbar_quick_actions_toggler_btn">
+                                <span class="kt-header__topbar-icon"><i class="flaticon2-gear"></i></span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <!--end: Quick Actions -->
+
+                        <!--begin: User Bar -->
+                        <div class="kt-header__topbar-item kt-header__topbar-item--user">
+                            <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="0px,0px">
+
+                                <!--use "kt-rounded" class for rounded avatar style-->
+                                <div class="kt-header__topbar-user kt-rounded-">
+                                    <span class="kt-header__topbar-welcome kt-hidden-mobile">Hi,</span>
+                                    <span class="kt-header__topbar-username kt-hidden-mobile">{{ user.username }}</span>
+                                    <img alt="Pic" src="{% static 'media/users/300_25.jpg' %}" class="kt-rounded-" />
+
+                                    <!--use below badge element instead the user avatar to display username's first letter(remove kt-hidden class to display it) -->
+                                    <span
+                                        class="kt-badge kt-badge--username kt-badge--lg kt-badge--brand kt-hidden kt-badge--bold">S</span>
+                                </div>
+                            </div>
+                            <div
+                                class="dropdown-menu dropdown-menu-fit dropdown-menu-right dropdown-menu-anim dropdown-menu-top-unround dropdown-menu-sm">
+                                <div class="kt-user-card kt-margin-b-40 kt-margin-b-30-tablet-and-mobile"
+                                    style="background-image: url({% static 'media/misc/head_bg_sm.jpg' %})">
+                                    <div class="kt-user-card__wrapper">
+                                        <div class="kt-user-card__pic">
+
+                                            <!--use "kt-rounded" class for rounded avatar style-->
+                                            <img alt="Pic" src="{% static 'media/users/300_21.jpg' %}"
+                                                class="kt-rounded-" />
+                                        </div>
+                                        <div class="kt-user-card__details">
+                                            <div class="kt-user-card__name">{{ user.username }}</div>
+                                            <div class="kt-user-card__position">合伙人</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul class="kt-nav kt-margin-b-10">
+                                    <li class="kt-nav__item">
+                                        <a href="/" class="kt-nav__link">
+                                            <span class="kt-nav__link-icon"><i class="flaticon2-calendar-3"></i></span>
+                                            <span class="kt-nav__link-text">账户总览</span>
+                                        </a>
+                                    </li>
+                                    <li class="kt-nav__item">
+                                        <a href="/Users/changepassword" class="kt-nav__link">
+                                            <span class="kt-nav__link-icon"><i class="flaticon2-lock"></i></span>
+                                            <span class="kt-nav__link-text">修改密码</span>
+                                        </a>
+                                    </li>
+                                    <li class="kt-nav__separator kt-nav__separator--fit"></li>
+                                    <li class="kt-nav__custom kt-space-between">
+                                        <a href="{% url 'Users:logout' %}"
+                                            class="btn btn-label-brand btn-upper btn-sm btn-bold">注销</a>
+                                        <i class="flaticon2-information kt-label-font-color-2" data-toggle="kt-tooltip"
+                                            data-placement="right" title="" data-original-title=""></i>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!--end: User Bar -->
+                    </div>
+
+                    <!-- end:: Header Topbar -->
+                </div>
+
+                <!-- end:: Header -->
+                <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
+
+                    <!-- begin:: Subheader -->
+                    <div class="kt-subheader   kt-grid__item" id="kt_subheader">
+                        <div class="kt-container  kt-container--fluid ">
+                            <div class="kt-subheader__main">
+                                <h3 class="kt-subheader__title">{% block subheader %}{% endblock subheader %}</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- end:: Subheader -->
+
+                    <!-- begin:: Content -->
+                    <div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+                        {% block content %}{% endblock content %}
+                    </div>
+
+                    <!-- end:: Content -->
+                </div>
+
+                <!-- begin:: Footer -->
+                <div class="kt-footer kt-grid__item kt-grid kt-grid--desktop kt-grid--ver-desktop">
+                    <div class="kt-container  kt-container--fluid ">
+                        <div class="kt-footer__copyright">
+                            2019&nbsp;&copy;&nbsp;<a href="#" target="_blank" class="kt-link">野猫科技</a>
+                        </div>
+                        <div class="kt-footer__menu">
+                            <a href="#" target="_blank" class="kt-footer__menu-link kt-link">关于</a>
+                            <a href="#" target="_blank" class="kt-footer__menu-link kt-link">团队成员</a>
+                            <a href="#" target="_blank" class="kt-footer__menu-link kt-link">联系我们</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- end:: Footer -->
+            </div>
+
+            <!-- end:: Wrapper -->
+        </div>
+
+        <!-- end:: Page -->
+    </div>
+
+    <!-- end:: Root -->
+
+    <!-- begin:: Topbar Offcanvas Panels -->
+
+    <!-- begin::Offcanvas Toolbar Quick Actions -->
+    <div id="kt_offcanvas_toolbar_quick_actions" class="kt-offcanvas-panel">
+        <div class="kt-offcanvas-panel__head">
+            <h3 class="kt-offcanvas-panel__title">
+                快捷方式
+            </h3>
+            <a href="#" class="kt-offcanvas-panel__close" id="kt_offcanvas_toolbar_quick_actions_close"><i
+                    class="flaticon2-delete"></i></a>
+        </div>
+        <div class="kt-offcanvas-panel__body">
+            <div class="kt-grid-nav-v2">
+                <a href="/MyCommodity" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon2-shopping-cart-1"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">我的商品</div>
+                </a>
+                <a href="/MyVideo" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon-upload"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">我的视频</div>
+                </a>
+                <a href="/PublishMutualBrushMission" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon2-avatar"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">互刷任务</div>
+                </a>
+                <a href="/PublishMaintenanceNumberMission" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon-piggy-bank"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">养号任务</div>
+                </a>
+                <a href="/PublishScanMission" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon-network"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">刷粉任务</div>
+                </a>
+                <a href="/PublishFollowMission" class="kt-grid-nav-v2__item">
+                    <div class="kt-grid-nav-v2__item-icon"><i class="flaticon-eye"></i></div>
+                    <div class="kt-grid-nav-v2__item-title">关注任务</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- end::Offcanvas Toolbar Quick Actions -->
+
+    <!-- end:: Topbar Offcanvas Panels -->
+
+    <!-- begin:: Scrolltop -->
+    <div id="kt_scrolltop" class="kt-scrolltop">
+        <i class="la la-arrow-up"></i>
+    </div>
+
+    <!-- end:: Scrolltop -->
+
+    <!-- begin::Global Config(global config for global JS sciprts) -->
+    <script>
+        var KTAppOptions = {
+            "colors": {
+                "state": {
+                    "brand": "#5d78ff",
+                    "metal": "#c4c5d6",
+                    "light": "#ffffff",
+                    "accent": "#00c5dc",
+                    "primary": "#5867dd",
+                    "success": "#34bfa3",
+                    "info": "#36a3f7",
+                    "warning": "#ffb822",
+                    "danger": "#fd3995",
+                    "focus": "#9816f4"
+                },
+                "base": {
+                    "label": [
+                        "#c5cbe3",
+                        "#a1a8c3",
+                        "#3d4465",
+                        "#3e4466"
+                    ],
+                    "shape": [
+                        "#f0f3ff",
+                        "#d9dffa",
+                        "#afb4d4",
+                        "#646c9a"
+                    ]
+                }
+            }
+        };
+    </script>
+
+    <!-- end::Global Config -->
+
+    <!--begin::Global Theme Bundle(used by all pages) -->
+    <script src="{% static 'plugins/global/plugins.bundle.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/underscore.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/scripts.bundle.js' %}" type="text/javascript"></script>
+    <!--end::Global Theme Bundle -->
+    {% block js %}{% endblock js %}
+</body>
+
+<!-- end::Body -->
+
+</html>

@@ -1,0 +1,10 @@
+{% extends "extends/base.html" %}
+{% load staticfiles %}
+{% block title %}手机云 | 设备管理{% endblock title %}
+{% block css %}
+{% endblock css %}
+{% block subheader %}设备管理{% endblock subheader %}
+{% block content %}
+{% endblock content %}
+{% block js %}
+{% endblock js %}

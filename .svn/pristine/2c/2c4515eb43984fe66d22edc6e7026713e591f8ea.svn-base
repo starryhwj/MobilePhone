@@ -1,0 +1,239 @@
+"use strict";
+
+var KTCalendarExternalEvents = function () {
+
+    var initExternalEvents = function () {
+        $('#kt_calendar_external_events .fc-draggable-handle').each(function () {
+            // store data so the calendar knows to render an event upon drop
+            $(this).data('event', {
+                title: $.trim($(this).text()), // use the element's text as the event title
+                stick: true, // maintain when user navigates (see docs on the renderEvent method)
+                classNames: [$(this).data('color')],
+            });
+        });
+    }
+
+    var initCalendar = function () {
+        var TODAY = $('#record_date').text();
+
+        var calendarEl = document.getElementById('kt_calendar');
+        var containerEl = document.getElementById('kt_calendar_external_events');
+
+        var Draggable = FullCalendarInteraction.Draggable;
+
+        new Draggable(containerEl, {
+            itemSelector: '.fc-draggable-handle',
+            eventData: function (eventEl) {
+                return $(eventEl).data('event');
+            }
+        });
+
+        var GetTimeStr = function(date) {
+            return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        };
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            plugins: ['interaction', 'timeGrid'],
+
+            isRTL: KTUtil.isRTL(),
+
+            height: 600,
+            contentHeight: 580,
+            aspectRatio: 3, // see: https://fullcalendar.io/docs/aspectRatio
+
+            defaultView: 'timeGridDay',
+            defaultDate: TODAY,
+            allDaySlot: false,
+            droppable: true, // this allows things to be dropped onto the calendar
+            editable: true,
+            eventLimit: true, // allow "more" link when too many events
+            navLinks: true,
+            slotEventOverlap: false,
+            eventOverlap: false,
+            events: {
+                url: $('#get_events_by_template_id_url').text(),
+                method: 'POST',
+                extraParams: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    templateid: $('#template_id').text(),
+                },
+                failure: function () {
+                    alert('模板数据获取出错!');
+                },
+            },
+
+            drop: function (arg) {
+                // is the "remove after drop" checkbox checked?
+                if ($('#kt_calendar_external_events_remove').is(':checked')) {
+                    // if so, remove the element from the "Draggable Events" list
+                    $(arg.draggedEl).remove();
+                }
+            },
+
+            eventRender: function (info) {
+                var element = $(info.el);
+
+                if (info.event.extendedProps && info.event.extendedProps.description) {
+                    if (element.hasClass('fc-day-grid-event')) {
+                        element.data('content', info.event.extendedProps.description);
+                        element.data('placement', 'top');
+                        KTApp.initPopover(element);
+                    } else if (element.hasClass('fc-time-grid-event')) {
+                        element.find('.fc-title').append('<div class="fc-description">' + info.event.extendedProps.description + '</div>');
+                    } else if (element.find('.fc-list-item-title').lenght !== 0) {
+                        element.find('.fc-list-item-title').append('<div class="fc-description">' + info.event.extendedProps.description + '</div>');
+                    }
+                }
+
+            },
+
+            eventDrop: function (eventDropInfo) {
+                //拖动修改
+                var strattime_str = GetTimeStr(eventDropInfo.event.start)
+                var endtime_str = ''
+                if (eventDropInfo.event.end != null) {
+                    endtime_str = GetTimeStr(eventDropInfo.event.end)
+                } 
+                var dataid = eventDropInfo.event.extendedProps.dataid
+                $.ajax({
+                    type: "POST",
+                    url: $("#edit_url").text(),
+                    data: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                        dataid: dataid,
+                        strattime_str: strattime_str,
+                        endtime_str: endtime_str,
+                        eventtype: eventDropInfo.event.title
+                    }
+                })
+            },
+
+            eventResize: function (eventResizeInfo) {
+                //拉动修改
+                var strattime_str = GetTimeStr(eventResizeInfo.event.start)
+                var endtime_str = ''
+                if (eventResizeInfo.event.end != null) {
+                    endtime_str = GetTimeStr(eventResizeInfo.event.end)
+                } 
+                var dataid = eventResizeInfo.event.extendedProps.dataid
+                $.ajax({
+                    type: "POST",
+                    url: $("#edit_url").text(),
+                    data: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                        dataid: dataid,
+                        strattime_str: strattime_str,
+                        endtime_str: endtime_str,
+                        eventtype: eventResizeInfo.event.title
+                    }
+                })
+            },
+
+            eventReceive: function (info) {
+                var strattime_str = GetTimeStr(info.event.start)
+                //拖动新增
+                $.ajax({
+                    type: "POST",
+                    url: $("#create_url").text(),
+                    data: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                        templateid: $('#template_id').text(),
+                        strattime_str: strattime_str,
+                        eventtype: info.event.title
+                    },
+                    success: function (response, status, xhr, $form) {
+                        if (response != 'Error') {
+                            info.event.setExtendedProp('dataid', response)
+                        }
+                    }
+                })
+            },
+
+            eventClick: function (info) {
+                var dataid = info.event.extendedProps.dataid
+                //点击修改
+                $.ajax({
+                    type: "POST",
+                    url: $("#get_event_by_id_url").text(),
+                    data: {
+                        csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                        dataid: dataid,
+                        eventtype: info.event.title,
+                    },
+                    success: function (response, status, xhr, $form) {
+                        $('#editMaintenanceNumberMissionModal').modal('show')
+                        $('#id_edit_description').val(response['description'])
+                        $('#id_data_id').text(response['dataid'])
+                        $('#id_data_type').text(response['type'])
+                    }
+                })
+            }
+        });
+
+        calendar.render();
+    }
+
+    return {
+        //main function to initiate the module
+        init: function () {
+            initExternalEvents();
+            initCalendar();
+        }
+    };
+}();
+
+jQuery(document).ready(function () {
+    KTCalendarExternalEvents.init();
+    $('.fc-header-toolbar').remove()
+    $('.fc-day-header').text('')
+});
+
+var back = function() {
+    window.location.href = $('#template_url').text()
+}
+
+var EditMaintenanceNumberMission = function() {
+    $.ajax({
+        type: "POST",
+        url: $("#editeventdetail").text(),
+        data: {
+            csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+            dataid: $('#id_data_id').text(),
+            eventtype: $('#id_data_type').text(),
+            description: $('#id_edit_description').val(),
+        },
+        success: function (response, status, xhr, $form) {
+            if (response != 'Error') {              
+                location.reload()
+            }
+        }
+    });
+}
+
+var DeleteMaintenanceNumberMission = function() {
+    swal.fire({
+        title: '确认删除?',
+        text: "确认后无法撤销！",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '是',
+        cancelButtonText: '否'
+    }).then(function (result) {
+        if (result.value) {
+            $.ajax({
+                type: "POST",
+                url: $("#delete_url").text(),
+                data: {
+                    csrfmiddlewaretoken: document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    dataid: $('#id_data_id').text(),
+                    eventtype: $('#id_data_type').text(),
+                },
+                success: function (response, status, xhr, $form) {
+                    if (response != 'Error') {
+                        location.reload()
+                    }
+                }
+            });
+        };
+    })
+}

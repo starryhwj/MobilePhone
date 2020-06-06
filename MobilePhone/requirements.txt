@@ -1,4 +1,4 @@
-Django==2.1.14
+Django==2.2.13
 Pillow==6.2.1
 pyodbc==4.0.27
 django-pyodbc-azure==2.1.0.0
